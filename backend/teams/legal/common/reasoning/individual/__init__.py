@@ -1,2 +1,0 @@
-from .compliance_risk_assessment import compliance_risk_assessment
-from .legal_authority_verification import legal_authority_verification

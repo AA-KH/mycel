@@ -1,1 +1,0 @@
-from .skills import CORE_SKILLS, ENGINEERING_SKILLS
