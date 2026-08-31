@@ -142,12 +142,18 @@ class GenericAgent(BaseAgent):
         )
         self.task_id = task_id
 
+from teams.intelligence.agents import MiraAgent, RaviAgent, AnikaAgent, NoorAgent
+
 # Registry: maps team name string → agent class
 TEAM_REGISTRY = {
     "coder": CoderAgent,
     "researcher": ResearcherAgent,
     "reviewer": ReviewerAgent,
     "tester": TesterAgent,
+    "mira": MiraAgent,
+    "ravi": RaviAgent,
+    "anika": AnikaAgent,
+    "noor": NoorAgent,
 }
 
 def build_team_agent(team_name: str, task_id: str, user_id: str = "system") -> BaseAgent:

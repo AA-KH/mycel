@@ -295,7 +295,8 @@ class ManagerAgent(BaseAgent):
                         # Phase 2 & 3: Use the actual organizational team, NOT the requested capability!
                         canonical_team = employee.department_id if hasattr(employee, "department_id") and employee.department_id else employee.team_id
                         
-                        agent = build_team_agent(employee.identity.specialization, self.task_id, self.user_id)
+                        # Pass employee_id so the registry can load specific Micro-Agents (like MiraAgent)
+                        agent = build_team_agent(employee_id, self.task_id, self.user_id)
                         agent.name = employee_name
                         agent.team = canonical_team  # type: ignore
                         agent.employee_name = employee_name  # type: ignore

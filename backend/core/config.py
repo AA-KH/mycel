@@ -101,6 +101,10 @@ class Settings(BaseSettings):
     cloudflare_image_worker_url: str = "https://image-gen.kaushaljindal07.workers.dev/"
     cloudflare_image_worker_key: Optional[str] = None
 
+    # External Tools APIs
+    serper_api_key: str = ""
+    firecrawl_api_key: str = ""
+
     model_config = SettingsConfigDict(
         env_file=env_path,
         env_file_encoding="utf-8",
