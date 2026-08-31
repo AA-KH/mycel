@@ -1,0 +1,136 @@
+import json
+import logging
+import re
+from agents.base_agent import BaseAgent
+from core.groq_engine import groq_engine
+
+# Import the actual python functions for the base tools
+from teams.intelligence.shared_tools import web_search, web_scrape
+
+logger = logging.getLogger(__name__)
+
+# --- COMMON TOOL SCHEMAS ---
+INTELLIGENCE_TOOLS = [
+    {
+        "type": "function",
+        "function": {
+            "name": "web_search",
+            "description": "Performs a live web search. Use this for discovering real-time market data, geopolitical news, or supplier info.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "query": {
+                        "type": "string",
+                        "description": "The search query"
+                    }
+                },
+                "required": ["query"]
+            }
+        }
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "web_scrape",
+            "description": "Scrapes a specific URL and returns the clean text content. Use this to read a full article or report.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "url": {
+                        "type": "string",
+                        "description": "The URL to scrape"
+                    }
+                },
+                "required": ["url"]
+            }
+        }
+    }
+]
+
+# --- COMMON REASONING GUIDELINES ---
+ELITE_REASONING_INSTRUCTIONS = """
+Elite Reasoning & Extreme Case Validation:
+- You must use deep Chain of Thought reasoning. Do not accept surface-level data.
+- Think about extreme edge cases (Black Swan events). What if the primary data source is wrong? What if the market shifts overnight?
+- Cross-validate your findings using your tools. If a supplier looks good, actively search for negative news or lawsuits to test extreme worst-case scenarios.
+"""
+
+class IntelligenceBaseAgent(BaseAgent):
+    """Overrides run_task to implement an autonomous Tool-Calling (ReAct) loop."""
+    
+    def __init__(self, name: str, role: str, system_prompt: str, user_id: str, tools: list):
+        super().__init__(name=name, role=role, system_prompt=system_prompt, user_id=user_id)
+        self.agent_tools = tools
+        
+    # Hook for child classes to execute their specific tools.
+    async def execute_tool(self, function_name: str, arguments: dict) -> str:
+        if function_name == "web_search":
+            return await web_search(arguments.get("query", ""))
+        elif function_name == "web_scrape":
+            return await web_scrape(arguments.get("url", ""))
+        else:
+            return f"Error: Tool {function_name} not found in base agent."
+
+    async def run_task(self, task_description: str, model: str = "llama-3.3-70b-versatile") -> str:
+        await self.report_status("working", f"🧠 {self.name} analyzing task and formulating research plan...")
+        
+        messages = [
+            {"role": "system", "content": self.system_prompt},
+            {"role": "user", "content": task_description}
+        ]
+        
+        MAX_ITERATIONS = 5
+        iteration = 0
+        
+        while iteration < MAX_ITERATIONS:
+            iteration += 1
+            
+            try:
+                response = await groq_engine.chat_completion(
+                    model=model,
+                    messages=messages,
+                    tools=self.agent_tools,
+                    tool_choice="auto",
+                    temperature=0.3
+                )
+                
+                response_message = response.choices[0].message
+                
+                if response_message.tool_calls:
+                    messages.append(response_message.model_dump(exclude_unset=True))
+                    
+                    for tool_call in response_message.tool_calls:
+                        function_name = tool_call.function.name
+                        arguments = json.loads(tool_call.function.arguments)
+                        
+                        await self.report_status("working", f"🔍 {self.name} using tool: {function_name}({arguments})")
+                        
+                        # Use dynamic hook so subclasses can intercept specific tools
+                        tool_result = await self.execute_tool(function_name, arguments)
+                            
+                        messages.append({
+                            "tool_call_id": tool_call.id,
+                            "role": "tool",
+                            "name": function_name,
+                            "content": tool_result,
+                        })
+                    
+                    continue
+                
+                raw_result = response_message.content or ""
+                result = re.sub(r'<think>.*?</think>', '', raw_result, flags=re.DOTALL).strip()
+                
+                if result.startswith("```json"):
+                    result = result.replace("```json", "", 1).strip()
+                if result.endswith("```"):
+                    result = result[:-3].strip()
+                    
+                await self.report_status("complete", f"✅ {self.name} completed research and generated output.")
+                return result
+
+            except Exception as e:
+                logger.error(f"{self.name} Agent Error in iteration {iteration}: {e}")
+                await self.report_status("failure", f"❌ {self.name} encountered an error: {str(e)[:60]}")
+                return f'{{"error": "Agent failed during execution: {str(e)}"}}'
+                
+        return '{"error": "Max tool iterations reached without final output."}'

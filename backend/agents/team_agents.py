@@ -142,7 +142,10 @@ class GenericAgent(BaseAgent):
         )
         self.task_id = task_id
 
-from teams.intelligence.agents import MiraAgent, RaviAgent, AnikaAgent, NoorAgent
+from teams.intelligence.team_members.mira.agent import MiraAgent
+from teams.intelligence.team_members.ravi.agent import RaviAgent
+from teams.intelligence.team_members.anika.agent import AnikaAgent
+from teams.intelligence.team_members.noor.agent import NoorAgent
 
 # Registry: maps team name string → agent class
 TEAM_REGISTRY = {
