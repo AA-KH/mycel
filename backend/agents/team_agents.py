@@ -8,9 +8,6 @@ Each agent has a focused role, appears in the Virtual Office, and
 reports its result back to the Manager Agent.
 """
 from agents.base_agent import BaseAgent
-from teams.research.orchestrator import ResearchTeamOrchestrator
-from teams.marketing.orchestrator import MarketingTeamOrchestrator
-
 
 CODER_PROMPT = """You are an elite Lead Frontend & Full-Stack Engineer at Mycel.
 Your job is to write complete, stunning, production-ready code based on requirements.
@@ -135,7 +132,7 @@ class TesterAgent(BaseAgent):
 class GenericAgent(BaseAgent):
     def __init__(self, team_name: str, task_id: str, user_id: str = "system"):
         role_label = " ".join([word.capitalize() for word in team_name.split('-')])
-        system_prompt = f"You are the {role_label} at Mycel.\nYour job is to execute tasks related to your specific role with elite proficiency.\n\nGuidelines:\n- Follow instructions carefully.\n- Provide high-quality output.\n- Return code or markdown as appropriate."
+        system_prompt = f"You are the {role_label} at Mycel.\nYour job is to execute tasks related to your specific role with elite proficiency.\n\nGuidelines:\n- Follow instructions carefully.\n- Provide high-quality output.\n- Return strict JSON or markdown as required by the TaskOrchestrator WorkUnit.\n- Do not include conversational filler."
         
         super().__init__(
             name=role_label,
@@ -153,29 +150,14 @@ TEAM_REGISTRY = {
     "tester": TesterAgent,
 }
 
-# Teams that use multi-agent orchestrators instead of single agents
-_TEAM_ORCHESTRATORS = {
-    "research": ResearchTeamOrchestrator,
-    "ux-researcher": ResearchTeamOrchestrator,  # UX research also routes to research team
-    "marketing": MarketingTeamOrchestrator,
-    "marketing-strategist": MarketingTeamOrchestrator,  # Marketing strategy also routes to marketing team
-    "content-creator": MarketingTeamOrchestrator,  # Content creation routes to marketing team
-}
-
-
 def build_team_agent(team_name: str, task_id: str, user_id: str = "system") -> BaseAgent:
     """Instantiate the correct agent class by team name."""
     name_lower = team_name.lower()
     
-    # Check for multi-agent team orchestrators first
-    orchestrator_cls = _TEAM_ORCHESTRATORS.get(name_lower)
-    if orchestrator_cls:
-        return orchestrator_cls(task_id=task_id, user_id=user_id)
-    
-    # Then check single-agent registry
+    # Check single-agent registry
     cls = TEAM_REGISTRY.get(name_lower)
     if cls:
         return cls(task_id=task_id, user_id=user_id)
     else:
-        # Generic fallback for dynamic OneManCompany roles
+        # Generic fallback for dynamic SCM roles (Forecasting, Procurement, etc)
         return GenericAgent(name_lower, task_id=task_id, user_id=user_id)

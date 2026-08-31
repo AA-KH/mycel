@@ -235,6 +235,8 @@ class WorkUnit(BaseModel):
     execution_contract_id: Optional[str] = None
     collaboration_contract_id: Optional[str] = None
     expected_outputs: List[str] = Field(default_factory=list)   # Output Contract IDs
+    expected_output_schema: Optional[Dict[str, Any]] = None     # JSON Schema for strict output
+    response_format_instructions: Optional[str] = None          # LLM instructions for output formatting
     quality_requirements: List[str] = Field(default_factory=list)# Quality gate IDs
     required_position: Optional[str] = None                    # Position ID (NOT employee)
     dependencies: List[str] = Field(default_factory=list)        # WorkUnit IDs this unit depends on

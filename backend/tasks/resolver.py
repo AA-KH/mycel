@@ -52,6 +52,8 @@ OUTPUT_TO_CAPABILITIES_MAP: Dict[str, List[str]] = {
 
     "operations_plan": ["process_management", "coordination", "planning"],
     "workflow_execution": ["process_management", "coordination"],
+    "supply_chain_architecture": ["scm_intelligence", "scm_network", "scm_resilience", "scm_council", "scm_architecture", "scm_executive"],
+    "risk_assessment": ["scm_resilience"],
 }
 
 

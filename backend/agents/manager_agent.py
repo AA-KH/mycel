@@ -179,9 +179,38 @@ class ManagerAgent(BaseAgent):
             detail="Manager is analyzing requirements and creating an execution plan...",
         )
 
-        plan = await self._create_plan(project_task)
-        if not plan:
-            await self.report_status("failure", "Failed to generate project plan.")
+        # ── Deterministic Orchestration (Zero LLM Tokens) ─────
+        from tasks.orchestrator import TaskOrchestrator
+        from tasks.models import TaskRequest
+        import uuid
+        
+        try:
+            orchestrator = TaskOrchestrator()
+            request = TaskRequest(
+                request_id=str(uuid.uuid4()),
+                task_id=self.task_id,
+                user_input=project_task
+            )
+            orch_result = orchestrator.orchestrate(request)
+            
+            subtasks = []
+            for wu in orch_result.work_units:
+                subtasks.append({
+                    "team": wu.team_id.replace("scm_", "") if wu.team_id else "coder",
+                    "task": f"{wu.title}: {wu.objective}"
+                })
+                
+            plan = {
+                "project": "Supply Chain Architecture Design",
+                "overview": project_task,
+                "subtasks": subtasks
+            }
+        except Exception as e:
+            logger.error(f"TaskOrchestrator failed: {e}")
+            plan = None
+
+        if not plan or not plan.get("subtasks"):
+            await self.report_status("failure", "Failed to generate project plan using Orchestrator.")
             await update_task_status(self.task_id, "failed")
             await emit_orchestration_event(
                 self.task_id, OrchestrationPhase.ORCHESTRATION_FAILED,
@@ -535,31 +564,6 @@ class ManagerAgent(BaseAgent):
             detail=f"Project '{project_name}' complete — {len(team_results)} subtasks finished.",
             total_subtasks=len(subtasks),
         )
-
-    async def _create_plan(self, project_task: str) -> dict | None:
-        """Call Groq to produce the JSON plan."""
-        messages = [
-            {"role": "system", "content": self.system_prompt},
-            {"role": "user", "content": f"Plan this project:\n\n{project_task}"},
-        ]
-        try:
-            response = await groq_engine.chat_completion(
-                model="qwen/qwen3.8-27b",
-                messages=messages,
-                temperature=0.4,
-                max_tokens=4000,
-            )
-            raw = response.choices[0].message.content or ""
-            raw = re.sub(r'<think>.*?</think>', '', raw, flags=re.DOTALL).strip()
-
-            # Extract JSON even if model adds surrounding text
-            json_match = re.search(r'\{.*\}', raw, re.DOTALL)
-            if json_match:
-                return json.loads(json_match.group())
-            return json.loads(raw)
-        except Exception as e:
-            logger.error(f"Manager plan generation failed: {e}")
-            return None
 
     async def _write_final_report(
         self, project_task: str, plan: dict, team_results: list

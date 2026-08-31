@@ -32,6 +32,8 @@ KNOWN_OUTPUT_KEYWORDS = {
     "financial_analysis": ["financial", "finance", "budget", "cost analysis", "forecast"],
     "campaign": ["marketing campaign", "campaign", "social media plan", "content strategy"],
     "operations_plan": ["operations", "workflow", "process plan", "logistics"],
+    "supply_chain_architecture": ["supply chain", "logistics network", "scm", "architecture", "supply chain management"],
+    "risk_assessment": ["worst case", "risk", "stress test", "resilience", "disaster recovery"],
 }
 
 

@@ -1,11 +1,41 @@
 import logging
 from typing import Dict, List, Optional, Any
+from enum import Enum
+from pydantic import BaseModel, Field
 from organization.teams.models import Team
 from execution.pipelines.models import TeamPipeline
 from workforce.employees.models import Employee
-from teams.validation.models import (
-    TeamReadiness, ValidationIssue, TeamValidationResult, TeamValidationSummary
-)
+
+class TeamReadiness(str, Enum):
+    READY = "READY"
+    READY_WITH_WARNINGS = "READY_WITH_WARNINGS"
+    NOT_READY = "NOT_READY"
+
+class ValidationIssue(BaseModel):
+    code: str
+    message: str
+    severity: str = "ERROR"
+    path: str = ""
+
+class TeamValidationResult(BaseModel):
+    team_id: str
+    valid: bool = False
+    readiness: TeamReadiness = TeamReadiness.NOT_READY
+    errors: List[ValidationIssue] = Field(default_factory=list)
+    warnings: List[ValidationIssue] = Field(default_factory=list)
+    checks: int = 0
+
+class TeamValidationSummary(BaseModel):
+    total_teams: int = 0
+    valid_teams: int = 0
+    invalid_teams: int = 0
+    ready_teams: int = 0
+    ready_with_warnings_teams: int = 0
+    not_ready_teams: int = 0
+    errors: int = 0
+    warnings: int = 0
+    results: List[TeamValidationResult] = Field(default_factory=list)
+
 from teams.registry import TeamRegistry
 from execution.pipelines.registry import PipelineRegistry
 from teams.resolver import TeamCapabilityResolver
