@@ -1,0 +1,4 @@
+from .individual.creative_direction_reasoning import creative_direction_reasoning
+from .individual.design_review_reasoning import design_review_reasoning
+
+CREATIVE_REASONING = [creative_direction_reasoning, design_review_reasoning]

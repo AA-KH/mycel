@@ -1,0 +1,1 @@
+from .knowledge import CORE_KNOWLEDGE, FINANCE_KNOWLEDGE

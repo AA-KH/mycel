@@ -1,0 +1,9 @@
+{
+  "id": "TOILET_STALL",
+  "name": "Toilet Stall",
+  "category": "misc",
+  "width": 32,
+  "height": 32,
+  "footprintW": 2,
+  "footprintH": 2
+}

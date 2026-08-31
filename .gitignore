@@ -1,0 +1,215 @@
+# ============================================================
+#  Mycel — .gitignore
+# ============================================================
+
+
+# ─────────────────────────────────────────────────────────────
+# Secrets & Environment
+# ─────────────────────────────────────────────────────────────
+.env
+.env.local
+.env.*.local
+.env.development.local
+.env.test.local
+.env.production.local
+# Keep the example file in source control
+!.env.example
+
+
+# ─────────────────────────────────────────────────────────────
+# Python
+# ─────────────────────────────────────────────────────────────
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+*.pyd
+
+# Virtual environments
+.venv/
+venv/
+env/
+ENV/
+env.bak/
+venv.bak/
+
+# Distribution / packaging
+build/
+dist/
+dist-ssr/
+develop-eggs/
+downloads/
+eggs/
+.eggs/
+*.egg-info/
+*.egg
+MANIFEST
+sdist/
+wheels/
+share/python-wheels/
+.installed.cfg
+
+# Type checkers & linters
+.mypy_cache/
+.dmypy.json
+dmypy.json
+.pyre/
+.pytype/
+.ruff_cache/
+cython_debug/
+
+# Test & coverage
+.tox/
+.nox/
+.coverage
+.coverage.*
+.cache/
+nosetests.xml
+coverage.xml
+*.cover
+*.py,cover
+.hypothesis/
+.pytest_cache/
+htmlcov/
+cover/
+test/
+tests/
+__tests__/
+test_*.py
+*_test.py
+*.test.js
+*.test.ts
+*.test.tsx
+*.spec.js
+*.spec.ts
+*.spec.tsx
+
+# PyInstaller
+*.manifest
+*.spec
+
+# Installer logs
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Jupyter
+.ipynb_checkpoints/
+profile_default/
+ipython_config.py
+
+# Package managers
+.pdm.toml
+.pdm-python
+.pdm-build/
+__pypackages__/
+
+# Celery
+celerybeat-schedule
+celerybeat.pid
+
+# PyPI
+.pypirc
+
+
+# ─────────────────────────────────────────────────────────────
+# Node / Frontend
+# ─────────────────────────────────────────────────────────────
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.eslintcache
+*.tsbuildinfo
+
+
+# ─────────────────────────────────────────────────────────────
+# Databases & Storage
+# ─────────────────────────────────────────────────────────────
+*.db
+*.sqlite
+*.sqlite3
+db.sqlite3-journal
+
+# Local artifact storage (generated at runtime by MockStorageProvider)
+local_storage/
+output/
+
+
+# ─────────────────────────────────────────────────────────────
+# Logs
+# ─────────────────────────────────────────────────────────────
+logs/
+*.log
+local_settings.py
+
+
+# ─────────────────────────────────────────────────────────────
+# IDE & Editors
+# ─────────────────────────────────────────────────────────────
+# VS Code / Cursor
+.vscode/
+.vscode-test/
+.history/
+*.code-workspace
+.cursor/
+.cursorrules
+
+# JetBrains
+.idea/
+
+# Spyder / Rope
+.spyderproject
+.spyproject
+.ropeproject
+
+
+# ─────────────────────────────────────────────────────────────
+# OS
+# ─────────────────────────────────────────────────────────────
+.DS_Store
+Thumbs.db
+desktop.ini
+
+
+# ─────────────────────────────────────────────────────────────
+# Temp & Scratch Files
+# ─────────────────────────────────────────────────────────────
+*.tmp
+*.temp
+tmp/
+scratch/
+
+# Temporary migration / analysis scripts
+backend_tree.txt
+structure.txt
+backend/scripts/temp_*.py
+backend/scripts/fix_imports_v*.py
+backend/scripts/migrate_architecture.py
+
+
+# ─────────────────────────────────────────────────────────────
+# Agent IDE (Antigravity)
+# ─────────────────────────────────────────────────────────────
+.gemini/
+
+
+# ─────────────────────────────────────────────────────────────
+# Mycel Runtime Workspaces
+# ─────────────────────────────────────────────────────────────
+/tmp/mycel_workspace/
+/backend/mycel_workspace/
+
+
+# ─────────────────────────────────────────────────────────────
+# Motia
+# ─────────────────────────────────────────────────────────────
+.motia/
+python_modules/
+.mermaid/
+
+
+# ─────────────────────────────────────────────────────────────
+# Docs build
+# ─────────────────────────────────────────────────────────────
+docs/_build/
+/site

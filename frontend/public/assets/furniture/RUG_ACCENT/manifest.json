@@ -1,0 +1,14 @@
+{
+  "id": "RUG_ACCENT",
+  "name": "Accent Rug",
+  "category": "decor",
+  "type": "asset",
+  "file": "RUG_ACCENT.png",
+  "width": 48,
+  "height": 32,
+  "footprintW": 3,
+  "footprintH": 2,
+  "canPlaceOnWalls": false,
+  "canPlaceOnSurfaces": false,
+  "backgroundTiles": 0
+}
