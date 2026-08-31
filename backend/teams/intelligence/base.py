@@ -71,7 +71,7 @@ class IntelligenceBaseAgent(BaseAgent):
         else:
             return f"Error: Tool {function_name} not found in base agent."
 
-    async def run_task(self, task_description: str, model: str = "llama-3.3-70b-versatile") -> str:
+    async def run_task(self, task_description: str, model: str = "qwen/qwen3.6-27b") -> str:
         await self.report_status("working", f"🧠 {self.name} analyzing task and formulating research plan...")
         
         messages = [
