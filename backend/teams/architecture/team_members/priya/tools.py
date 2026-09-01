@@ -3,56 +3,67 @@ def get_tools() -> list:
         {
             "type": "function",
             "function": {
-                "name": "validate_json_schema",
-                "description": "Validates a sample data payload against a proposed JSON schema.",
+                "name": "generate_gantt_chart",
+                "description": "Generates a Mermaid.js Gantt chart showing the exact timeline, parallel tasks, and dependencies.",
                 "parameters": {
                     "type": "object",
                     "properties": {
-                        "schema": {
-                            "type": "object",
-                            "description": "The JSON schema definition."
-                        },
-                        "sample_data": {
-                            "type": "object",
-                            "description": "The sample data payload to validate against the schema."
+                        "title": {"type": "string"},
+                        "tasks": {
+                            "type": "array",
+                            "items": {
+                                "type": "object",
+                                "properties": {
+                                    "section": {"type": "string", "description": "e.g., 'Backend API', 'Frontend UI'"},
+                                    "task_name": {"type": "string"},
+                                    "duration": {"type": "string", "description": "e.g., '2w', '5d'"},
+                                    "dependencies": {"type": "array", "items": {"type": "string"}, "description": "Names of tasks this depends on"}
+                                },
+                                "required": ["section", "task_name", "duration"]
+                            }
                         }
                     },
-                    "required": ["schema", "sample_data"]
+                    "required": ["title", "tasks"]
                 }
             }
         },
         {
             "type": "function",
             "function": {
-                "name": "generate_mermaid_graph",
-                "description": "Generates Mermaid.js syntax for architecture diagrams to map out the system.",
+                "name": "estimate_sprint_velocity",
+                "description": "Calculates how many sprints a feature will take based on complexity, team size, and backend/frontend split.",
                 "parameters": {
                     "type": "object",
                     "properties": {
-                        "graph_type": {
-                            "type": "string",
-                            "enum": ["flowchart", "sequence"],
-                            "description": "Type of diagram."
+                        "feature_name": {"type": "string"},
+                        "complexity": {"type": "string", "enum": ["low", "medium", "high", "extreme"]},
+                        "engineers_assigned": {"type": "integer"}
+                    },
+                    "required": ["feature_name", "complexity", "engineers_assigned"]
+                }
+            }
+        },
+        {
+            "type": "function",
+            "function": {
+                "name": "map_technical_dependencies",
+                "description": "Generates a JSON dependency tree proving which services must be built first.",
+                "parameters": {
+                    "type": "object",
+                    "properties": {
+                        "critical_path": {
+                            "type": "array",
+                            "items": {"type": "string"}
                         },
-                        "elements": {
+                        "parallel_tracks": {
                             "type": "array",
                             "items": {
-                                "type": "object",
-                                "properties": {
-                                    "source": {"type": "string"},
-                                    "target": {"type": "string"},
-                                    "label": {"type": "string"},
-                                    "from": {"type": "string"},
-                                    "to": {"type": "string"},
-                                    "message": {"type": "string"}
-                                }
+                                "type": "array",
+                                "items": {"type": "string"}
                             }
-                        },
-                        "title": {
-                            "type": "string"
                         }
                     },
-                    "required": ["graph_type", "elements"]
+                    "required": ["critical_path", "parallel_tracks"]
                 }
             }
         }

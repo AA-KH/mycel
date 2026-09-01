@@ -3,36 +3,52 @@ def get_tools() -> list:
         {
             "type": "function",
             "function": {
-                "name": "generate_mermaid_graph",
-                "description": "Generates Mermaid.js syntax for architecture diagrams to map out the system.",
+                "name": "run_chaos_simulation",
+                "description": "Simulates random catastrophic failures (e.g., region outage, DDoS) on the architecture.",
                 "parameters": {
                     "type": "object",
                     "properties": {
-                        "graph_type": {
-                            "type": "string",
-                            "enum": ["flowchart", "sequence"],
-                            "description": "Type of diagram."
-                        },
-                        "elements": {
+                        "architecture_components": {
                             "type": "array",
-                            "items": {
-                                "type": "object",
-                                "properties": {
-                                    "source": {"type": "string"},
-                                    "target": {"type": "string"},
-                                    "label": {"type": "string"},
-                                    "from": {"type": "string"},
-                                    "to": {"type": "string"},
-                                    "message": {"type": "string"}
-                                }
-                            },
-                            "description": "List of relationships or sequence events."
+                            "items": {"type": "string"},
+                            "description": "List of core components (e.g., 'API Gateway', 'Database', 'Message Queue')"
                         },
-                        "title": {
-                            "type": "string"
+                        "failure_scenario": {
+                            "type": "string",
+                            "enum": ["region_outage", "ddos_attack", "database_corruption", "message_queue_overload"]
                         }
                     },
-                    "required": ["graph_type", "elements"]
+                    "required": ["architecture_components", "failure_scenario"]
+                }
+            }
+        },
+        {
+            "type": "function",
+            "function": {
+                "name": "detect_anti_patterns",
+                "description": "Scans the proposed architecture for dangerous anti-patterns.",
+                "parameters": {
+                    "type": "object",
+                    "properties": {
+                        "architecture_description": {"type": "string"}
+                    },
+                    "required": ["architecture_description"]
+                }
+            }
+        },
+        {
+            "type": "function",
+            "function": {
+                "name": "validate_compliance",
+                "description": "Audits the design against strict enterprise standards (SOC2, GDPR).",
+                "parameters": {
+                    "type": "object",
+                    "properties": {
+                        "handles_pii": {"type": "boolean"},
+                        "data_encrypted_at_rest": {"type": "boolean"},
+                        "has_audit_logs": {"type": "boolean"}
+                    },
+                    "required": ["handles_pii", "data_encrypted_at_rest", "has_audit_logs"]
                 }
             }
         }

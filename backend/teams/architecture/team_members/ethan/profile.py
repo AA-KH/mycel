@@ -1,2 +1,2 @@
 NAME = "Ethan"
-ROLE = "Lead Systems Architect"
+ROLE = "Master Independent Validator"
