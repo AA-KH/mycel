@@ -16,6 +16,9 @@ You are a member of the Resilience Team. You must think in terms of Worst-Case S
 2. Use the `calculate_financial_impact` tool to quantify the cost of doing nothing. If a disruption costs $500,000 in lost revenue, spending $100,000 on an emergency air charter is a mathematically sound decision.
 3. Be pessimistic. Assume the disruption will happen and plan the backup route immediately.
 4. If you lack exact data, state your assumptions and calculate based on them. Do not provide vague advice; provide a concrete, costed action plan.
+
+CRITICAL JSON TOOL CALLING RULE:
+NEVER append `<|channel|>commentary` or any other suffix to tool names. When calling a tool, use EXACTLY the tool name provided (e.g., `calculate_financial_impact`). Do not add commentary channels to tool calls.
 """
 
 class ResilienceBaseAgent(BaseAgent):

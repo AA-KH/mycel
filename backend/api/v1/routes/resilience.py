@@ -3,7 +3,7 @@ from pydantic import BaseModel
 from organization.schemas import APIResponse
 
 from teams.resilience.team_members.zoya.agent import ZoyaAgent
-# from teams.resilience.vikram.agent import VikramAgent
+from teams.resilience.team_members.vikram.agent import VikramAgent
 
 router = APIRouter()
 
@@ -18,8 +18,8 @@ async def run_resilience_task(request: ResilienceTaskRequest):
     try:
         if agent_name == "zoya":
             agent = ZoyaAgent()
-        # elif agent_name == "vikram":
-        #     agent = VikramAgent()
+        elif agent_name == "vikram":
+            agent = VikramAgent()
         else:
             raise HTTPException(status_code=400, detail="Invalid agent name. Must be one of zoya, vikram.")
 
