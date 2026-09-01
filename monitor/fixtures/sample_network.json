@@ -1,0 +1,214 @@
+{
+  "network_id": "pencil-mfg-001",
+  "architecture_version": "1",
+  "name": "Graphite Pencil Manufacturing Network",
+  "description": "Multi-geography pencil manufacturing network with primary operations in India and international suppliers",
+  "nodes": [
+    {
+      "id": "supplier-a",
+      "type": "supplier",
+      "name": "Gujarat Graphite Works",
+      "aliases": ["GGW", "Gujarat Graphite", "GG Works", "Gujarat Graphite Pvt Ltd"],
+      "location": "Ahmedabad",
+      "coordinates": {"latitude": 23.0225, "longitude": 72.5714},
+      "country": "IND",
+      "region": "Gujarat",
+      "dependency_share": 0.65,
+      "alternate_capacity": 0.20,
+      "commodities": ["graphite", "graphite rods", "pencil cores"],
+      "lead_time_days": 7,
+      "website": "https://www.gujaratgraphite.example.com",
+      "domain": "gujaratgraphite.example.com",
+      "metadata": {"established": "1998", "employees": "450"}
+    },
+    {
+      "id": "supplier-b",
+      "type": "supplier",
+      "name": "Deutsche Holz GmbH",
+      "aliases": ["Deutsche Holz", "DH GmbH", "DeutscheHolz"],
+      "location": "Stuttgart",
+      "coordinates": {"latitude": 48.7758, "longitude": 9.1829},
+      "country": "DEU",
+      "region": "Baden-Württemberg",
+      "dependency_share": 0.25,
+      "alternate_capacity": 0.50,
+      "commodities": ["cedar wood", "wood slats", "incense cedar"],
+      "lead_time_days": 21,
+      "website": "https://www.deutscheholz.example.de",
+      "domain": "deutscheholz.example.de",
+      "metadata": {"established": "1975", "certification": "FSC"}
+    },
+    {
+      "id": "supplier-c",
+      "type": "supplier",
+      "name": "Maharashtra Clay Products",
+      "aliases": ["MCP", "Maharashtra Clay", "MH Clay Products"],
+      "location": "Pune",
+      "coordinates": {"latitude": 18.5204, "longitude": 73.8567},
+      "country": "IND",
+      "region": "Maharashtra",
+      "dependency_share": 0.10,
+      "alternate_capacity": 0.70,
+      "commodities": ["kaolin clay", "ceramic clay", "binding clay"],
+      "lead_time_days": 5,
+      "metadata": {"established": "2005"}
+    },
+    {
+      "id": "port-mundra",
+      "type": "port",
+      "name": "Mundra Port",
+      "aliases": ["Adani Port Mundra", "Mundra International"],
+      "location": "Mundra",
+      "coordinates": {"latitude": 22.8394, "longitude": 69.7214},
+      "country": "IND",
+      "region": "Gujarat",
+      "metadata": {"port_code": "INMUN"}
+    },
+    {
+      "id": "factory-delhi",
+      "type": "factory",
+      "name": "Delhi Pencil Works",
+      "aliases": ["DPW", "Delhi Factory", "Okhla Pencil Plant"],
+      "location": "New Delhi",
+      "coordinates": {"latitude": 28.5355, "longitude": 77.2910},
+      "country": "IND",
+      "region": "Delhi",
+      "commodities": ["pencils", "graphite pencils", "colored pencils"],
+      "metadata": {"capacity": "50000_units_per_day"}
+    },
+    {
+      "id": "warehouse-delhi",
+      "type": "warehouse",
+      "name": "Delhi Distribution Centre",
+      "aliases": ["Delhi DC", "Narela Warehouse"],
+      "location": "New Delhi",
+      "coordinates": {"latitude": 28.8528, "longitude": 77.0940},
+      "country": "IND",
+      "region": "Delhi",
+      "metadata": {"capacity_sqft": "25000"}
+    },
+    {
+      "id": "material-graphite",
+      "type": "material",
+      "name": "Graphite",
+      "aliases": ["natural graphite", "pencil graphite", "graphite powder"],
+      "commodities": ["graphite"],
+      "metadata": {"hs_code": "250410"}
+    },
+    {
+      "id": "material-cedar",
+      "type": "material",
+      "name": "Incense Cedar Wood",
+      "aliases": ["cedar wood", "cedar slats", "pencil wood", "incense cedar"],
+      "commodities": ["cedar wood", "timber"],
+      "metadata": {"hs_code": "440399"}
+    },
+    {
+      "id": "material-clay",
+      "type": "material",
+      "name": "Kaolin Clay",
+      "aliases": ["kaolin", "china clay", "binding clay"],
+      "commodities": ["kaolin clay", "kaolin"],
+      "metadata": {"hs_code": "250700"}
+    }
+  ],
+  "edges": [
+    {
+      "source": "supplier-a",
+      "target": "material-graphite",
+      "relationship": "supplies",
+      "dependency_pct": 0.65
+    },
+    {
+      "source": "supplier-b",
+      "target": "material-cedar",
+      "relationship": "supplies",
+      "dependency_pct": 0.25
+    },
+    {
+      "source": "supplier-c",
+      "target": "material-clay",
+      "relationship": "supplies",
+      "dependency_pct": 0.10
+    },
+    {
+      "source": "material-graphite",
+      "target": "factory-delhi",
+      "relationship": "feeds",
+      "dependency_pct": 0.50
+    },
+    {
+      "source": "material-cedar",
+      "target": "factory-delhi",
+      "relationship": "feeds",
+      "dependency_pct": 0.35
+    },
+    {
+      "source": "material-clay",
+      "target": "factory-delhi",
+      "relationship": "feeds",
+      "dependency_pct": 0.15
+    },
+    {
+      "source": "supplier-a",
+      "target": "factory-delhi",
+      "relationship": "transports_to",
+      "transport_mode": "road",
+      "route_waypoints": [
+        {"coordinates": {"latitude": 23.0225, "longitude": 72.5714}, "name": "Ahmedabad"},
+        {"coordinates": {"latitude": 24.5854, "longitude": 73.7125}, "name": "Udaipur"},
+        {"coordinates": {"latitude": 26.9124, "longitude": 75.7873}, "name": "Jaipur"},
+        {"coordinates": {"latitude": 28.5355, "longitude": 77.2910}, "name": "Delhi"}
+      ],
+      "lead_time_days": 2,
+      "metadata": {"route_name": "Ahmedabad-Delhi Highway", "route_type": "primary", "distance_km": "940"}
+    },
+    {
+      "source": "supplier-c",
+      "target": "factory-delhi",
+      "relationship": "transports_to",
+      "transport_mode": "road",
+      "route_waypoints": [
+        {"coordinates": {"latitude": 18.5204, "longitude": 73.8567}, "name": "Pune"},
+        {"coordinates": {"latitude": 19.0760, "longitude": 72.8777}, "name": "Mumbai"},
+        {"coordinates": {"latitude": 23.2599, "longitude": 77.4126}, "name": "Bhopal"},
+        {"coordinates": {"latitude": 28.5355, "longitude": 77.2910}, "name": "Delhi"}
+      ],
+      "lead_time_days": 3,
+      "metadata": {"route_name": "Pune-Delhi via Mumbai", "route_type": "secondary", "distance_km": "1400"}
+    },
+    {
+      "source": "supplier-b",
+      "target": "port-mundra",
+      "relationship": "ships_to",
+      "transport_mode": "sea",
+      "lead_time_days": 18,
+      "metadata": {"route_name": "Stuttgart-Mundra Sea Route", "route_type": "international"}
+    },
+    {
+      "source": "port-mundra",
+      "target": "factory-delhi",
+      "relationship": "transports_to",
+      "transport_mode": "road",
+      "route_waypoints": [
+        {"coordinates": {"latitude": 22.8394, "longitude": 69.7214}, "name": "Mundra"},
+        {"coordinates": {"latitude": 23.0225, "longitude": 72.5714}, "name": "Ahmedabad"},
+        {"coordinates": {"latitude": 28.5355, "longitude": 77.2910}, "name": "Delhi"}
+      ],
+      "lead_time_days": 3,
+      "metadata": {"route_name": "Mundra-Delhi", "route_type": "import_route", "distance_km": "1100"}
+    },
+    {
+      "source": "factory-delhi",
+      "target": "warehouse-delhi",
+      "relationship": "stores_at",
+      "transport_mode": "road",
+      "lead_time_days": 0.5
+    }
+  ],
+  "metadata": {
+    "industry": "stationery_manufacturing",
+    "primary_product": "graphite_pencils",
+    "headquarters": "New Delhi, India"
+  }
+}
