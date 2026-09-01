@@ -189,14 +189,23 @@ class CouncilBaseAgent(BaseAgent):
         while iteration < MAX_ITERATIONS:
             iteration += 1
             try:
-                response = await engine_manager.chat_completion(
-                    model=model,
-                    messages=messages,
-                    team_id=self.name.lower(),
-                    tools=self.agent_tools,
-                    tool_choice="auto",
-                    temperature=0.1
-                )
+                # ── Message Truncation (Anti-413 Payload Too Large) ──
+                # Keep system prompt (index 0) and the last 6 messages if it grows too large.
+                if len(messages) > 8:
+                    messages = [messages[0]] + messages[-6:]
+
+                kwargs = {
+                    "model": model,
+                    "messages": messages,
+                    "team_id": self.name.lower(),
+                    "temperature": 0.1
+                }
+                
+                if self.agent_tools:
+                    kwargs["tools"] = self.agent_tools
+                    kwargs["tool_choice"] = "auto"
+                    
+                response = await engine_manager.chat_completion(**kwargs)
 
                 response_message = response.choices[0].message
 
@@ -262,7 +271,18 @@ class CouncilBaseAgent(BaseAgent):
                 return result
 
             except Exception as e:
-                error_msg = f"Council agent failed: {str(e)}"
+                error_msg = str(e)
+                
+                # Auto-Healing for Tool Hallucinations / Validation Errors
+                if "Tool call validation failed" in error_msg or "tool_use_failed" in error_msg:
+                    logger.warning(f"[{self.name}] Tool hallucination detected. Auto-healing... Error: {error_msg}")
+                    messages.append({
+                        "role": "user",
+                        "content": f"System Error: {error_msg}. You attempted to call an invalid tool name or format. DO NOT append '<|channel|>commentary' or any other suffix. Use the EXACT tool name provided."
+                    })
+                    continue
+                    
+                error_msg = f"Council agent failed: {error_msg}"
                 logger.error(error_msg)
                 await self.report_status("error", f"❌ {self.name} error: {error_msg}")
                 return json.dumps({"error": error_msg})

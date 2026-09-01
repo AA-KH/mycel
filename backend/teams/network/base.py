@@ -81,14 +81,21 @@ class NetworkBaseAgent(BaseAgent):
             iteration += 1
             
             try:
-                response = await engine_manager.chat_completion(
-                    model=model,
-                    messages=messages,
-                    team_id=self.name.lower(),
-                    tools=self.agent_tools,
-                    tool_choice="auto",
-                    temperature=0.1 # Lower temperature for math
-                )
+                if len(messages) > 8:
+                    messages = [messages[0]] + messages[-6:]
+
+                kwargs = {
+                    "model": model,
+                    "messages": messages,
+                    "team_id": self.name.lower(),
+                    "temperature": 0.1
+                }
+                
+                if self.agent_tools:
+                    kwargs["tools"] = self.agent_tools
+                    kwargs["tool_choice"] = "auto"
+
+                response = await engine_manager.chat_completion(**kwargs)
                 
                 response_message = response.choices[0].message
                 
@@ -157,8 +164,21 @@ class NetworkBaseAgent(BaseAgent):
                 return result
 
             except Exception as e:
-                logger.error(f"{self.name} Agent Error in iteration {iteration}: {e}")
-                await self.report_status("failure", f"❌ {self.name} encountered an error: {str(e)[:60]}")
-                return f'{{"error": "Agent failed during execution: {str(e)}"}}'
+                error_msg = str(e)
                 
-        return '{"error": "Max tool iterations reached without final output."}'
+                if "Tool call validation failed" in error_msg or "tool_use_failed" in error_msg:
+                    logger.warning(f"[{self.name}] Tool hallucination detected. Auto-healing... Error: {error_msg}")
+                    messages.append({
+                        "role": "user",
+                        "content": f"System Error: {error_msg}. You attempted to call an invalid tool name or format. DO NOT append '<|channel|>commentary' or any other suffix. Use the EXACT tool name provided."
+                    })
+                    continue
+                    
+                error_msg = f"Network agent failed: {error_msg}"
+                logger.error(error_msg)
+                await self.report_status("error", f"❌ {self.name} error: {error_msg}")
+                return json.dumps({"error": error_msg})
+
+        error_msg = "Network agent exceeded maximum iterations."
+        await self.report_status("error", f"❌ {self.name} {error_msg}")
+        return json.dumps({"error": error_msg})

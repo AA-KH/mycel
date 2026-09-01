@@ -47,6 +47,7 @@ class RobustGroqClient:
 
     async def _get_healthy_client(self) -> dict:
         import time
+        import random
         if not self.clients:
             raise ValueError(f"No Groq API keys available for team '{self.team_id}'.")
             
@@ -55,8 +56,8 @@ class RobustGroqClient:
         # 1. Find all healthy clients (cooldown expired)
         healthy = [c for c in self.clients if c["cooldown_until"] <= now]
         if healthy:
-            # Return the first healthy one (or could be randomized)
-            return healthy[0]
+            # SCATTER TRAFFIC: Pick a random healthy key to avoid hammering the same key concurrently
+            return random.choice(healthy)
             
         # 2. If ALL clients are on cooldown, find the one that expires soonest
         soonest = min(self.clients, key=lambda c: c["cooldown_until"])
@@ -200,6 +201,9 @@ class GroqEngineManager:
                 logger.info(f"[GroqEngineManager] Team '{team_id}' → {len(team_keys)} dedicated key(s).")
             else:
                 logger.info(f"[GroqEngineManager] Team '{team_id}' → using global fallback pool.")
+                
+        # Global Concurrency Queue (Semaphore)
+        self._async_semaphore: Optional[asyncio.Semaphore] = None
 
     def get_engine(self, team_id: Optional[str] = None) -> RobustGroqClient:
         """
@@ -218,9 +222,14 @@ class GroqEngineManager:
         team_id: Optional[str] = None,
         **kwargs,
     ):
-        """Convenience passthrough that resolves the engine by team_id."""
+        """Convenience passthrough that resolves the engine by team_id and applies global rate limiting."""
+        if self._async_semaphore is None:
+            self._async_semaphore = asyncio.Semaphore(settings.groq_max_concurrency)
+            
         engine = self.get_engine(team_id)
-        return await engine.chat_completion(model=model, messages=messages, **kwargs)
+        
+        async with self._async_semaphore:
+            return await engine.chat_completion(model=model, messages=messages, **kwargs)
 
 
 # ─────────────────────────────────────────────────────────────────────────────

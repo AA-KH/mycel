@@ -59,6 +59,7 @@ class Settings(BaseSettings):
     groq_marketing_keys: str = ""
     # Groq Extreme Global Pool
     groq_extreme_pool: str = ""
+    groq_max_concurrency: int = 3
 
     # Council Agent specific keys
     groq_api_key_helena: str = ""
