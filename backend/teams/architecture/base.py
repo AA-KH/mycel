@@ -16,8 +16,8 @@ class ArchitectureBaseAgent(BaseAgent):
     and MongoDB persistence for architectural decisions and outputs.
     """
 
-    def __init__(self, name: str, role: str, system_prompt: str, agent_tools: list = None):
-        super().__init__(name, role, system_prompt)
+    def __init__(self, name: str, role: str, system_prompt: str, agent_tools: list = None, session_id: str = None):
+        super().__init__(name=name, role=role, system_prompt=system_prompt, session_id=session_id)
         self.agent_tools = agent_tools or []
 
     async def execute_tool(self, function_name: str, arguments: dict) -> Any:

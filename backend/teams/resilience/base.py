@@ -24,8 +24,8 @@ NEVER append `<|channel|>commentary` or any other suffix to tool names. When cal
 class ResilienceBaseAgent(BaseAgent):
     """Overrides run_task to implement an autonomous Tool-Calling (ReAct) loop for Risk & Continuity."""
     
-    def __init__(self, name: str, role: str, system_prompt: str, user_id: str, tools: list):
-        super().__init__(name=name, role=role, system_prompt=system_prompt, user_id=user_id)
+    def __init__(self, name: str, role: str, system_prompt: str, user_id: str, tools: list, session_id: str = None):
+        super().__init__(name=name, role=role, system_prompt=system_prompt, user_id=user_id, session_id=session_id)
         # Combine specific tools with Resilience shared tools
         self.agent_tools = tools + RESILIENCE_SHARED_TOOLS
         

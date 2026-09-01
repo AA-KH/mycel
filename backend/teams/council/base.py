@@ -132,8 +132,8 @@ class CouncilBaseAgent(BaseAgent):
     trails to MongoDB (council_reports collection) for XAI / Chatbot KB.
     """
 
-    def __init__(self, name: str, role: str, system_prompt: str, user_id: str, tools: list):
-        super().__init__(name=name, role=role, system_prompt=system_prompt, user_id=user_id)
+    def __init__(self, name: str, role: str, system_prompt: str, user_id: str, tools: list, session_id: str = None):
+        super().__init__(name=name, role=role, system_prompt=system_prompt, user_id=user_id, session_id=session_id)
         # Each member's specific tools + shared Council tools
         self.agent_tools = tools + COUNCIL_SHARED_TOOLS
 

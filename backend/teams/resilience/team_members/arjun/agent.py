@@ -3,13 +3,14 @@ from teams.resilience.team_members.arjun.prompt import ARJUN_SYSTEM_PROMPT
 from teams.resilience.team_members.arjun.tools import ARJUN_SPECIFIC_TOOLS, generate_recovery_plan, fetch_live_exchange_rate
 
 class ArjunAgent(ResilienceBaseAgent):
-    def __init__(self, task_id: str = "default"):
+    def __init__(self, task_id: str = "default", session_id: str = None):
         super().__init__(
             name="Arjun",
             role="Business Continuity & Recovery Planner",
             system_prompt=ARJUN_SYSTEM_PROMPT,
             tools=ARJUN_SPECIFIC_TOOLS,
-            user_id=task_id
+            user_id=task_id,
+            session_id=session_id
         )
 
     async def execute_tool(self, function_name: str, arguments: dict):

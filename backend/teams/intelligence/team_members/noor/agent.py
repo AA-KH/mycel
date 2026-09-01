@@ -62,14 +62,15 @@ Do not wrap the JSON in markdown blocks like ```json, just return the raw JSON s
 """
 
 class NoorAgent(IntelligenceBaseAgent):
-    def __init__(self, task_id: str, user_id: str = "system"):
+    def __init__(self, task_id: str = "default", user_id: str = "system", session_id: str = None):
         # Noor gets the common tools + her specialized risk tools
         super().__init__(
             name="Noor", 
             role="geopolitical_risk", 
             system_prompt=NOOR_PROMPT, 
             user_id=user_id, 
-            tools=INTELLIGENCE_TOOLS + NOOR_SPECIFIC_TOOLS
+            tools=INTELLIGENCE_TOOLS + NOOR_SPECIFIC_TOOLS,
+            session_id=session_id
         )
         self.task_id = task_id
 

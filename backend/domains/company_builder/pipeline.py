@@ -33,7 +33,7 @@ class CompanyBuilderPipeline:
         # Publish init event
         try:
             from core.rabbitmq import rabbitmq_producer
-            await rabbitmq_producer.publish(f"company_builder.{state.workflow_id}.init", state.model_dump())
+            await rabbitmq_producer.publish(f"company_builder.{state.workflow_id}.init", state.model_dump(mode="json"))
         except Exception as e:
             logger.warning(f"Failed to publish init event: {e}")
             

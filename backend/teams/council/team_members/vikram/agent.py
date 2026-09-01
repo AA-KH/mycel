@@ -12,10 +12,11 @@ from teams.council.team_members.vikram.tools import (
 )
 
 class VikramAgent(CouncilBaseAgent):
-    def __init__(self, task_id: str = "default"):
+    def __init__(self, task_id: str = "default", session_id: str = None):
         super().__init__(
             name="Vikram",
             role="Resilience Strategist (Council)",
+            session_id=session_id,
             system_prompt=VIKRAM_SYSTEM_PROMPT,
             tools=VIKRAM_SPECIFIC_TOOLS,
             user_id=task_id

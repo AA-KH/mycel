@@ -3,13 +3,14 @@ from teams.resilience.team_members.leena.prompt import LEENA_SYSTEM_PROMPT
 from teams.resilience.team_members.leena.tools import LEENA_SPECIFIC_TOOLS, run_capacity_stress_test, simulate_lead_time_shock, generate_breaking_point_report
 
 class LeenaAgent(ResilienceBaseAgent):
-    def __init__(self, task_id: str = "default"):
+    def __init__(self, task_id: str = "default", session_id: str = None):
         super().__init__(
             name="Leena",
             role="Supply Chain Stress Tester",
             system_prompt=LEENA_SYSTEM_PROMPT,
             tools=LEENA_SPECIFIC_TOOLS,
-            user_id=task_id
+            user_id=task_id,
+            session_id=session_id
         )
 
     async def execute_tool(self, function_name: str, arguments: dict):

@@ -2,19 +2,20 @@ import json
 import httpx
 from geopy.geocoders import Nominatim
 from geopy.distance import geodesic
-from duckduckgo_search import DDGS
+from ddgs import DDGS
 from teams.architecture.base import ArchitectureBaseAgent
 from .profile import NAME, ROLE
 from .prompt import SYSTEM_PROMPT
 from .tools import get_tools
 
 class RohanAgent(ArchitectureBaseAgent):
-    def __init__(self):
+    def __init__(self, session_id: str = None):
         super().__init__(
             name=NAME,
             role=ROLE,
             system_prompt=SYSTEM_PROMPT,
-            agent_tools=get_tools()
+            agent_tools=get_tools(),
+            session_id=session_id
         )
 
     async def execute_tool(self, function_name: str, arguments: dict):

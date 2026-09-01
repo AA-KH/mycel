@@ -60,8 +60,8 @@ Elite Reasoning & Extreme Case Validation:
 class IntelligenceBaseAgent(BaseAgent):
     """Overrides run_task to implement an autonomous Tool-Calling (ReAct) loop."""
     
-    def __init__(self, name: str, role: str, system_prompt: str, user_id: str, tools: list):
-        super().__init__(name=name, role=role, system_prompt=system_prompt, user_id=user_id)
+    def __init__(self, name: str, role: str, system_prompt: str, user_id: str, tools: list, session_id: str = None):
+        super().__init__(name=name, role=role, system_prompt=system_prompt, user_id=user_id, session_id=session_id)
         self.agent_tools = tools
         
     # Hook for child classes to execute their specific tools.

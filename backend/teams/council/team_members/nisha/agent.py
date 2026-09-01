@@ -12,10 +12,11 @@ from teams.council.team_members.nisha.tools import (
 )
 
 class NishaAgent(CouncilBaseAgent):
-    def __init__(self, task_id: str = "default"):
+    def __init__(self, task_id: str = "default", session_id: str = None):
         super().__init__(
             name="Nisha",
             role="Operations Strategist (Council)",
+            session_id=session_id,
             system_prompt=NISHA_SYSTEM_PROMPT,
             tools=NISHA_SPECIFIC_TOOLS,
             user_id=task_id

@@ -3,14 +3,15 @@ from teams.resilience.team_members.zoya.prompt import ZOYA_SYSTEM_PROMPT
 from teams.resilience.team_members.zoya.tools import ZOYA_SPECIFIC_TOOLS, search_global_news, check_supplier_financial_health, analyze_geopolitical_risk, map_network_spof, calculate_fmea_rpn, fetch_global_disaster_alerts, check_severe_weather, fetch_conflict_events
 
 class ZoyaAgent(ResilienceBaseAgent):
-    def __init__(self, task_id: str = "default"):
+    def __init__(self, task_id: str = "default", session_id: str = None):
         # Zoya doesn't need heavy math reasoning, but she needs the ReAct base class.
         super().__init__(
             name="Zoya",
             role="Risk Analyst",
             system_prompt=ZOYA_SYSTEM_PROMPT,
             user_id=task_id,
-            tools=ZOYA_SPECIFIC_TOOLS
+            tools=ZOYA_SPECIFIC_TOOLS,
+            session_id=session_id
         )
         
     async def execute_tool(self, function_name: str, arguments: dict) -> str:

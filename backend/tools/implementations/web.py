@@ -154,7 +154,7 @@ class WebSearchTool(BaseTool):
 
     def _do_search(self, query: str, max_results: int, region: str) -> List[Dict[str, str]]:
         """Execute DuckDuckGo search (synchronous, called from executor)."""
-        from duckduckgo_search import DDGS
+        from ddgs import DDGS
         
         results = []
         with DDGS() as ddgs:
