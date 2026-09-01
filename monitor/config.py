@@ -71,12 +71,33 @@ class MonitorConfig(BaseSettings):
     changedetection_api_key: Optional[str] = None
     changedetection_timeout: int = 15
 
+    # ── Source: WTO Timeseries API ──
+    wto_enabled: bool = True
+    wto_api_key: Optional[str] = Field(default=None, alias="WTO_API_KEY")
+    wto_base_url: str = "https://api.wto.org/timeseries/v1"
+    wto_timeout: int = 30
+    wto_min_request_interval: float = 1.1  # Rate limit: 1 req/sec
+
+    # ── Source: Global Trade Alert ──
+    global_trade_alert_enabled: bool = True
+    gta_api_url: Optional[str] = Field(default=None, alias="GTA_API_URL")
+    gta_api_key: Optional[str] = Field(default=None, alias="GTA_API_KEY")
+    gta_timeout: int = 30
+
+    # ── Source: WITS / World Bank ──
+    wits_enabled: bool = True
+    wits_base_url: str = "https://wits.worldbank.org/API/V1/SDMX/V21/rest/data"
+    wits_timeout: int = 30
+
     # ── Scheduling ──
     default_poll_interval: int = 3600  # 1 hour
     gdelt_poll_interval: int = 900  # 15 min
     gdacs_poll_interval: int = 600  # 10 min
     usgs_poll_interval: int = 300  # 5 min
     openmeteo_poll_interval: int = 1800  # 30 min
+    wto_poll_interval: int = 86400  # 24h — periodic state observer
+    gta_poll_interval: int = 86400  # 24h
+    wits_poll_interval: int = 86400  # 24h — periodic state observer
 
     # ── Severity Thresholds ──
     # Impact score thresholds for severity classification

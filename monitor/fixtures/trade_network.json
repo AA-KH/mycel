@@ -1,0 +1,102 @@
+{
+  "network_id": "trade-test-network",
+  "architecture_version": "1",
+  "name": "International Trade Test Network",
+  "description": "Test network with international trade lanes for trade-policy monitoring",
+  "nodes": [
+    {
+      "id": "supplier-china-graphite",
+      "type": "supplier",
+      "name": "Shandong Graphite Corp",
+      "aliases": ["Shandong Graphite", "SDG Corp"],
+      "location": "Qingdao",
+      "coordinates": {"latitude": 36.07, "longitude": 120.38},
+      "country": "CHN",
+      "commodities": ["graphite"],
+      "hs_codes": ["250410"],
+      "dependency_share": 0.65,
+      "alternate_capacity": 0.3
+    },
+    {
+      "id": "supplier-germany-steel",
+      "type": "supplier",
+      "name": "Deutsche Stahl GmbH",
+      "aliases": ["Deutsche Stahl", "DS GmbH"],
+      "location": "Essen",
+      "coordinates": {"latitude": 51.46, "longitude": 7.01},
+      "country": "DEU",
+      "commodities": ["steel"],
+      "hs_codes": ["7208"],
+      "dependency_share": 0.4
+    },
+    {
+      "id": "factory-india",
+      "type": "factory",
+      "name": "Mumbai Manufacturing Works",
+      "aliases": ["Mumbai MFG", "MMW"],
+      "location": "Mumbai",
+      "coordinates": {"latitude": 19.08, "longitude": 72.88},
+      "country": "IND",
+      "commodities": ["graphite products", "steel products"]
+    },
+    {
+      "id": "dest-usa",
+      "type": "distributor",
+      "name": "US Distribution Center",
+      "location": "Los Angeles",
+      "coordinates": {"latitude": 33.94, "longitude": -118.41},
+      "country": "USA"
+    },
+    {
+      "id": "mat-graphite",
+      "type": "material",
+      "name": "Graphite",
+      "aliases": ["natural graphite", "graphite powder"],
+      "commodities": ["graphite"],
+      "hs_codes": ["250410"]
+    },
+    {
+      "id": "mat-steel",
+      "type": "material",
+      "name": "Hot-rolled Steel",
+      "aliases": ["steel coil", "HR steel"],
+      "commodities": ["steel"],
+      "hs_codes": ["7208"]
+    }
+  ],
+  "edges": [
+    {
+      "source": "supplier-china-graphite",
+      "target": "factory-india",
+      "relationship": "supplies",
+      "dependency_pct": 0.65,
+      "transport_mode": "sea"
+    },
+    {
+      "source": "mat-graphite",
+      "target": "supplier-china-graphite",
+      "relationship": "material_of",
+      "dependency_pct": 1.0
+    },
+    {
+      "source": "supplier-germany-steel",
+      "target": "factory-india",
+      "relationship": "supplies",
+      "dependency_pct": 0.4,
+      "transport_mode": "sea"
+    },
+    {
+      "source": "mat-steel",
+      "target": "supplier-germany-steel",
+      "relationship": "material_of",
+      "dependency_pct": 1.0
+    },
+    {
+      "source": "factory-india",
+      "target": "dest-usa",
+      "relationship": "distributes_to",
+      "dependency_pct": 0.8,
+      "transport_mode": "sea"
+    }
+  ]
+}

@@ -93,6 +93,7 @@
       "name": "Graphite",
       "aliases": ["natural graphite", "pencil graphite", "graphite powder"],
       "commodities": ["graphite"],
+      "hs_codes": ["250410"],
       "metadata": {"hs_code": "250410"}
     },
     {
@@ -101,6 +102,7 @@
       "name": "Incense Cedar Wood",
       "aliases": ["cedar wood", "cedar slats", "pencil wood", "incense cedar"],
       "commodities": ["cedar wood", "timber"],
+      "hs_codes": ["440399"],
       "metadata": {"hs_code": "440399"}
     },
     {
@@ -109,6 +111,7 @@
       "name": "Kaolin Clay",
       "aliases": ["kaolin", "china clay", "binding clay"],
       "commodities": ["kaolin clay", "kaolin"],
+      "hs_codes": ["250700"],
       "metadata": {"hs_code": "250700"}
     }
   ],

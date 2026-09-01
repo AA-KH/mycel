@@ -11,7 +11,7 @@ All optional fields degrade gracefully — the system works with partial data.
 from __future__ import annotations
 
 from enum import Enum
-from typing import Optional
+from typing import Any, Optional
 
 from pydantic import BaseModel, Field
 
@@ -65,6 +65,8 @@ class NetworkNode(BaseModel):
     Optional fields are genuinely optional — the system degrades gracefully.
     """
 
+    model_config = {"populate_by_name": True}
+
     id: str
     type: NodeType
     name: str
@@ -76,12 +78,18 @@ class NetworkNode(BaseModel):
     criticality: Optional[float] = None  # 0.0-1.0, computed if not provided
     dependency_share: Optional[float] = None  # 0.0-1.0, fraction of total supply
     commodities: list[str] = Field(default_factory=list)
+    hs_codes: list[str] = Field(default_factory=list)  # Harmonized System codes for trade monitoring
     alternate_capacity: Optional[float] = None  # 0.0-1.0
     lead_time_days: Optional[float] = None
     website: Optional[str] = None
     domain: Optional[str] = None
     identifiers: dict[str, str] = Field(default_factory=dict)  # e.g. {"duns": "..."}
     metadata: dict[str, str] = Field(default_factory=dict)
+
+    def model_post_init(self, __context: Any) -> None:
+        """Migrate legacy metadata.hs_code to first-class hs_codes field."""
+        if not self.hs_codes and "hs_code" in self.metadata:
+            self.hs_codes = [self.metadata["hs_code"]]
 
 
 class NetworkEdge(BaseModel):
