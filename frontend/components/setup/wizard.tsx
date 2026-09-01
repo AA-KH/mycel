@@ -1,9 +1,11 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import { PixelButton, PixelChip, ProgressSquares } from '@/components/pixel/pixel-ui'
 import { PixelWorld } from '@/components/pixel/pixel-scene'
+import { fetchSetupStatus, getToken, saveSetup } from '@/lib/auth'
 import {
   EMPTY_DATA,
   StepBudget,

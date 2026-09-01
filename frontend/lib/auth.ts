@@ -81,3 +81,46 @@ export function clearSession() {
   sessionStorage.removeItem(TOKEN_KEY)
   sessionStorage.removeItem(USER_KEY)
 }
+
+/* ---------- operator onboarding setup ---------- */
+
+export type SetupStatus = {
+  has_setup: boolean
+  setup: Record<string, unknown> | null
+  completed_at?: string | null
+}
+
+/**
+ * Does this operator already have a network built?
+ * Returns has_setup:false on any failure so login never dead-ends —
+ * worst case the operator runs the wizard again.
+ */
+export async function fetchSetupStatus(token: string): Promise<SetupStatus> {
+  try {
+    const res = await fetch(`${API_URL}/api/setup/me`, {
+      headers: { Authorization: `Bearer ${token}` },
+      cache: 'no-store',
+    })
+    if (!res.ok) return { has_setup: false, setup: null }
+    return (await res.json()) as SetupStatus
+  } catch {
+    return { has_setup: false, setup: null }
+  }
+}
+
+/** Persist the wizard answers and mark onboarding complete. */
+export async function saveSetup(
+  token: string,
+  setup: unknown,
+): Promise<SetupStatus> {
+  const res = await fetch(`${API_URL}/api/setup/me`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify(setup),
+  })
+  if (!res.ok) throw new Error('Could not save your setup')
+  return (await res.json()) as SetupStatus
+}
