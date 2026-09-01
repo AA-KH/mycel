@@ -134,6 +134,7 @@ class RobustGroqClient:
 _TEAM_KEY_MAP: Dict[str, str] = {
     # Executive Team
     "atlas":       "groq_api_key_atlas",
+    "maya":        "groq_api_key_maya",
     
     # Architecture Team
     "ethan":       "groq_api_key_ethan",
