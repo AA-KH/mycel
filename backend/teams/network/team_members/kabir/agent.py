@@ -38,6 +38,17 @@ class KabirAgent(NetworkBaseAgent):
                 arguments.get("shift_hours", 0.0),
                 arguments.get("number_of_shifts", 1)
             )
+        elif function_name == "check_supplier_holidays":
+            from teams.network.team_members.kabir.tools import check_supplier_holidays
+            return await check_supplier_holidays(
+                arguments.get("country_code", ""),
+                arguments.get("year", 2025)
+            )
+        elif function_name == "check_weather_delay_risk":
+            from teams.network.team_members.kabir.tools import check_weather_delay_risk
+            return await check_weather_delay_risk(
+                arguments.get("city_name", "")
+            )
         
         # Fallback to base network tools (like calculate_distance)
         return await super().execute_tool(function_name, arguments)

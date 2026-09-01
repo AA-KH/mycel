@@ -84,8 +84,111 @@ KABIR_SPECIFIC_TOOLS = [
                 "required": ["pickers_count", "items_per_picker_per_hour", "shift_hours", "number_of_shifts"]
             }
         }
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "check_supplier_holidays",
+            "description": "Checks the public holidays in a supplier's country for a given year using the Nager.Date API.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "country_code": {
+                        "type": "string",
+                        "description": "2-letter ISO country code (e.g., 'CN' for China, 'US', 'IN')."
+                    },
+                    "year": {
+                        "type": "integer",
+                        "description": "The year to check (e.g., 2025)."
+                    }
+                },
+                "required": ["country_code", "year"]
+            }
+        }
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "check_weather_delay_risk",
+            "description": "Checks current weather and forecast conditions in a specific city using OpenWeatherMap to assess logistics delay risks.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "city_name": {
+                        "type": "string",
+                        "description": "The name of the city to check weather for (e.g., 'Miami')."
+                    }
+                },
+                "required": ["city_name"]
+            }
+        }
     }
 ]
+
+import requests
+from core.config import settings
+
+async def check_supplier_holidays(country_code: str, year: int) -> str:
+    """Fetches public holidays for a specific country and year."""
+    try:
+        url = f"https://date.nager.at/api/v3/PublicHolidays/{year}/{country_code}"
+        response = requests.get(url, timeout=10)
+        
+        if response.status_code == 200:
+            holidays = response.json()
+            if not holidays:
+                return f"No holidays found for {country_code} in {year}."
+                
+            # Just return a summary of the next 5 or key ones to save tokens
+            summary = [{"date": h.get("date"), "name": h.get("name"), "localName": h.get("localName")} for h in holidays[:10]]
+            return json.dumps({
+                "country": country_code,
+                "year": year,
+                "total_holidays": len(holidays),
+                "sample_holidays": summary,
+                "warning": "Holidays can increase supplier lead time. Adjust safety stock accordingly."
+            }, indent=2)
+        elif response.status_code == 404:
+            return f"Error: Country code '{country_code}' not supported by Nager.Date API."
+        else:
+            return f"Error fetching holidays. HTTP {response.status_code}"
+    except Exception as e:
+        return f"Error checking holidays: {str(e)}"
+
+async def check_weather_delay_risk(city_name: str) -> str:
+    """Fetches weather data from OpenWeatherMap to assess delay risks."""
+    try:
+        api_key = settings.openweathermap_api_key
+        if not api_key:
+            return "Warning: OPENWEATHERMAP_API_KEY is not configured in .env. Skipping weather check, assume normal weather."
+            
+        url = f"https://api.openweathermap.org/data/2.5/weather?q={city_name}&appid={api_key}&units=metric"
+        response = requests.get(url, timeout=10)
+        
+        if response.status_code == 200:
+            data = response.json()
+            weather_desc = data.get("weather", [{}])[0].get("description", "Unknown")
+            temp = data.get("main", {}).get("temp")
+            wind_speed = data.get("wind", {}).get("speed")
+            
+            risk_level = "Low"
+            # Basic risk heuristic based on wind or extreme weather types
+            if "snow" in weather_desc.lower() or "storm" in weather_desc.lower() or "rain" in weather_desc.lower():
+                risk_level = "Medium"
+            if "hurricane" in weather_desc.lower() or wind_speed > 25: # 25 m/s is very high wind
+                risk_level = "High"
+                
+            return json.dumps({
+                "city": city_name,
+                "weather": weather_desc,
+                "temperature_celsius": temp,
+                "wind_speed_ms": wind_speed,
+                "logistics_delay_risk": risk_level
+            }, indent=2)
+        else:
+            return f"Error fetching weather data. HTTP {response.status_code}"
+    except Exception as e:
+        return f"Error checking weather: {str(e)}"
 
 # --- IMPLEMENTATIONS ---
 

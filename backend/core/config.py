@@ -116,6 +116,7 @@ class Settings(BaseSettings):
     # External Tools APIs
     serper_api_key: str = ""
     firecrawl_api_key: str = ""
+    openweathermap_api_key: str = ""
 
     model_config = SettingsConfigDict(
         env_file=env_path,

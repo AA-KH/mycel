@@ -33,7 +33,9 @@ NETWORK_TOOLS = [
                 "required": ["city1", "city2"]
             }
         }
+    }
 ]
+
 
 # --- COMMON REASONING GUIDELINES ---
 MATH_REASONING_INSTRUCTIONS = """
