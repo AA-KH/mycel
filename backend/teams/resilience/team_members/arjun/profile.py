@@ -7,10 +7,10 @@ arjun = Employee(
     identity=EmployeeIdentity(
         first_name="Arjun",
         last_name="",
-        title="Continuity & recovery planning",
+        title="Business Continuity & Recovery Planner",
         specialization="scm_resilience",
         seniority="Senior",
-        background="Expert in Continuity & recovery planning."
+        background="Expert in Business Continuity Planning, Financial Risk Mitigation, and developing actionable supply chain recovery strategies."
     ),
     reasoning_profile_id="standard"
 )
