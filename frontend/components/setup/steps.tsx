@@ -2,6 +2,7 @@
 
 import { useRef, useState } from 'react'
 import {
+  AgentNote,
   ChipToggle,
   OptionCard,
   RadioRow,
@@ -43,6 +44,12 @@ export type SetupData = {
   customerAreas: string
   volume: string
   demandPattern: string
+  peakSurge: string
+  timeline: string
+  targetDate: string
+  deadlineType: string
+  budgetTolerance: string
+  freightModes: string[]
   priorities: string[]
   constraints: ConstraintEntry[]
   files: string[]
@@ -65,6 +72,12 @@ export const EMPTY_DATA: SetupData = {
   customerAreas: '',
   volume: '',
   demandPattern: '',
+  peakSurge: '',
+  timeline: '',
+  targetDate: '',
+  deadlineType: '',
+  budgetTolerance: '',
+  freightModes: [],
   priorities: [...DEFAULT_PRIORITIES],
   constraints: [],
   files: [],
@@ -411,12 +424,187 @@ export function StepScale({ data, update }: StepProps) {
             ))}
           </div>
         </div>
+        <div>
+          <SectionLabel>Peak surge — at your busiest, volume can spike to:</SectionLabel>
+          <div className="flex flex-wrap gap-2">
+            {['~ Same as usual', '2x normal', '5x normal', '10x or more', 'Not sure'].map((o) => (
+              <ChipToggle
+                key={o}
+                label={o}
+                selected={data.peakSurge === o}
+                onToggle={() => update({ peakSurge: o })}
+              />
+            ))}
+          </div>
+        </div>
+        <AgentNote agent="Ethan" role="Independent validator">
+          Ethan stress-tests your network at these volumes. The gap between normal and peak decides
+          how much slack capacity the blueprint must survive.
+        </AgentNote>
       </div>
     </div>
   )
 }
 
-/* ------------------------------------------------ STEP 5 */
+/* ------------------------------------------------ STEP 5 — TIMELINE */
+
+const TIMELINE_OPTIONS = [
+  {
+    label: 'As soon as possible',
+    sublabel: 'Network should be operational within weeks.',
+  },
+  {
+    label: 'Fixed launch date',
+    sublabel: 'A specific event or date — e.g. Black Friday, Diwali, a product launch.',
+  },
+  {
+    label: 'This quarter',
+    sublabel: 'Within the next ~3 months.',
+  },
+  {
+    label: '6 – 12 months',
+    sublabel: 'A longer runway — we can phase the rollout.',
+  },
+  {
+    label: 'Flexible',
+    sublabel: 'No hard target — optimize for the best network, not the calendar.',
+  },
+]
+
+export function StepTimeline({ data, update }: StepProps) {
+  return (
+    <div>
+      <StepHeading kicker="By when?">When does this network need to be live?</StepHeading>
+      <p className="mb-5 text-sm leading-relaxed text-muted-foreground">
+        A hard date changes everything — supplier onboarding, freight choices and rollout phases
+        all get sequenced backwards from it.
+      </p>
+      <div className="flex flex-col gap-6">
+        <div>
+          <SectionLabel>Launch target</SectionLabel>
+          <div className="flex flex-col gap-2">
+            {TIMELINE_OPTIONS.map((o) => (
+              <RadioRow
+                key={o.label}
+                label={o.label}
+                sublabel={o.sublabel}
+                selected={data.timeline === o.label}
+                onSelect={() => update({ timeline: o.label })}
+              />
+            ))}
+          </div>
+          {data.timeline === 'Fixed launch date' ? (
+            <div className="mt-3">
+              <TextField
+                label="Which date or event?"
+                value={data.targetDate}
+                onChange={(v) => update({ targetDate: v })}
+                placeholder="e.g. Black Friday 2026 / 15 March 2027"
+              />
+            </div>
+          ) : null}
+        </div>
+        <div>
+          <SectionLabel>How hard is this deadline?</SectionLabel>
+          <div className="flex flex-wrap gap-2">
+            {['Immovable — we miss it, we lose', 'Strong preference', 'Soft target'].map((o) => (
+              <ChipToggle
+                key={o}
+                label={o}
+                selected={data.deadlineType === o}
+                onToggle={() => update({ deadlineType: o })}
+              />
+            ))}
+          </div>
+        </div>
+        <AgentNote agent="Priya" role="Implementation planner">
+          Priya builds your rollout plan backwards from this date. An immovable deadline compresses
+          her phases and rules out slow options before Rohan even prices them.
+        </AgentNote>
+      </div>
+    </div>
+  )
+}
+
+/* ------------------------------------------------ STEP 6 — BUDGET TOLERANCE */
+
+const BUDGET_OPTIONS = [
+  {
+    label: 'Strictly lowest cost',
+    sublabel: 'Every rupee counts. Slow-but-cheap routes win — think sea freight, consolidated loads.',
+    badge: 'Cost first',
+  },
+  {
+    label: 'Balanced',
+    sublabel: 'Prefer cheap, but pay a premium where it clearly protects speed or resilience.',
+    badge: 'Default',
+  },
+  {
+    label: 'Speed over cost',
+    sublabel: 'Premium options like air freight are on the table when they hit the deadline.',
+    badge: 'Speed first',
+  },
+  {
+    label: 'Cost is secondary',
+    sublabel: 'Reliability and availability matter far more than the freight bill.',
+    badge: 'Resilience',
+  },
+]
+
+export function StepBudget({ data, update }: StepProps) {
+  const toggleMode = (m: string) =>
+    update({
+      freightModes: data.freightModes.includes(m)
+        ? data.freightModes.filter((x) => x !== m)
+        : [...data.freightModes, m],
+    })
+
+  return (
+    <div>
+      <StepHeading kicker="At what cost?">How much cost pressure can the network take?</StepHeading>
+      <p className="mb-5 text-sm leading-relaxed text-muted-foreground">
+        This sets the trade-off rules — whether we route your goods on a 30-day sea lane or a
+        3-day air corridor.
+      </p>
+      <div className="flex flex-col gap-6">
+        <div>
+          <SectionLabel>Budget tolerance</SectionLabel>
+          <div className="flex flex-col gap-2">
+            {BUDGET_OPTIONS.map((o) => (
+              <RadioRow
+                key={o.label}
+                label={o.label}
+                sublabel={o.sublabel}
+                badge={o.badge}
+                selected={data.budgetTolerance === o.label}
+                onSelect={() => update({ budgetTolerance: o.label })}
+              />
+            ))}
+          </div>
+        </div>
+        <div>
+          <SectionLabel>Freight modes you are open to (pick any)</SectionLabel>
+          <div className="flex flex-wrap gap-2">
+            {['Sea', 'Rail', 'Road', 'Air', 'No preference'].map((m) => (
+              <ChipToggle
+                key={m}
+                label={m}
+                selected={data.freightModes.includes(m)}
+                onToggle={() => toggleMode(m)}
+              />
+            ))}
+          </div>
+        </div>
+        <AgentNote agent="Rohan" role="Master supply-chain architect">
+          Rohan uses this to choose between routes. {'"Strictly lowest cost"'} locks him to sea and
+          road; {'"speed over cost"'} unlocks premium air corridors when your deadline demands it.
+        </AgentNote>
+      </div>
+    </div>
+  )
+}
+
+/* ------------------------------------------------ STEP 7 — PRIORITIES */
 
 export function StepPriorities({ data, update }: StepProps) {
   const [draggedIndex, setDraggedIndex] = useState<number | null>(null)
@@ -534,7 +722,7 @@ export function StepPriorities({ data, update }: StepProps) {
   )
 }
 
-/* ------------------------------------------------ STEP 6 */
+/* ------------------------------------------------ STEP 8 — CONSTRAINTS */
 
 const CONSTRAINT_CATEGORIES = [
   'Existing suppliers',
@@ -615,7 +803,7 @@ export function StepConstraints({ data, update }: StepProps) {
   )
 }
 
-/* ------------------------------------------------ STEP 7 */
+/* ------------------------------------------------ STEP 9 — UPLOAD */
 
 const FILE_TYPES = [
   'Supplier list',
