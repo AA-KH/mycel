@@ -142,10 +142,13 @@ class NetworkBaseAgent(BaseAgent):
                         logger.info(f"Saved {self.name}'s math/reasoning trail to DB.")
                     else:
                         logger.warning("MongoDB is not connected. Reasoning trail was not saved.")
+                    
+                    # Broadcast final result to frontend for transparency
+                    await self.report_status("complete", f"✅ {self.name} finished task. \nFinal Output: \n{json.dumps(parsed_output, indent=2) if isinstance(parsed_output, dict) else parsed_output}")
+                
                 except Exception as db_err:
                     logger.error(f"Failed to save {self.name}'s math/reasoning trail to DB: {db_err}")
 
-                await self.report_status("complete", f"✅ {self.name} finished network calculations.")
                 return result
 
             except Exception as e:

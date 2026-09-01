@@ -6,12 +6,13 @@ from teams.network.team_members.aanya.agent import AanyaAgent
 from teams.network.team_members.dev.agent import DevAgent
 from teams.network.team_members.kabir.agent import KabirAgent
 from teams.network.team_members.tara.agent import TaraAgent
+from teams.network.resilience.zoya.agent import ZoyaAgent
 
 router = APIRouter()
 
 class NetworkTaskRequest(BaseModel):
     task_description: str
-    agent_name: str  # "aanya", "dev", "kabir", "tara"
+    agent_name: str  # "aanya", "dev", "kabir", "tara", "zoya"
 
 @router.post("/network/run", response_model=APIResponse, status_code=status.HTTP_200_OK)
 async def run_network_task(request: NetworkTaskRequest):
@@ -26,8 +27,10 @@ async def run_network_task(request: NetworkTaskRequest):
             agent = KabirAgent()
         elif agent_name == "tara":
             agent = TaraAgent()
+        elif agent_name == "zoya":
+            agent = ZoyaAgent()
         else:
-            raise HTTPException(status_code=400, detail="Invalid agent name. Must be one of aanya, dev, kabir, tara.")
+            raise HTTPException(status_code=400, detail="Invalid agent name. Must be one of aanya, dev, kabir, tara, zoya.")
 
         result = await agent.run_task(task_description=request.task_description)
         

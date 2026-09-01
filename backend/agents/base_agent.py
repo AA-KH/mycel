@@ -33,7 +33,7 @@ class BaseAgent:
             "session_id": self.session_id,
             "role": self.role,
             "status": state,
-            "summary": summary[:160],
+            "summary": summary, # Send FULL logs without truncation for frontend transparency
             "link": None,
             "workspace": "Groq Engine",
             "last_heartbeat_at": now,
