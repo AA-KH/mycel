@@ -3,7 +3,7 @@ from teams.network.team_members.kabir.prompt import KABIR_SYSTEM_PROMPT
 from teams.network.team_members.kabir.tools import KABIR_SPECIFIC_TOOLS, calculate_eoq, calculate_safety_stock, estimate_fulfillment_capacity
 
 class KabirAgent(NetworkBaseAgent):
-    def __init__(self, task_id: str = "default"):
+    def __init__(self, task_id: str = "default", session_id: str = None):
         system_prompt = f"{KABIR_SYSTEM_PROMPT}\n\n{MATH_REASONING_INSTRUCTIONS}"
         
         # Combine base network tools with Kabir's specific tools
@@ -14,7 +14,8 @@ class KabirAgent(NetworkBaseAgent):
             role="Inventory Optimizer",
             system_prompt=system_prompt,
             user_id=task_id,
-            tools=combined_tools
+            tools=combined_tools,
+            session_id=session_id
         )
         
     async def execute_tool(self, function_name: str, arguments: dict) -> str:

@@ -10,10 +10,11 @@ from teams.council.team_members.omar.tools import (
 )
 
 class OmarAgent(CouncilBaseAgent):
-    def __init__(self, task_id: str = "default"):
+    def __init__(self, task_id: str = "default", session_id: str = None):
         super().__init__(
             name="Omar",
             role="Risk & Compliance Strategist (Council)",
+            session_id=session_id,
             system_prompt=OMAR_SYSTEM_PROMPT,
             tools=OMAR_SPECIFIC_TOOLS,
             user_id=task_id

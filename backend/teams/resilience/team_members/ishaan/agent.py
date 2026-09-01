@@ -3,10 +3,11 @@ from teams.resilience.team_members.ishaan.prompt import ISHAAN_SYSTEM_PROMPT
 from teams.resilience.team_members.ishaan.tools import ISHAAN_SPECIFIC_TOOLS, simulate_cascading_failure, run_monte_carlo_simulation, generate_black_swan_scenario, fetch_nasa_eonet_anomalies, fetch_world_bank_economic_data
 
 class IshaanAgent(ResilienceBaseAgent):
-    def __init__(self, task_id: str = "default"):
+    def __init__(self, task_id: str = "default", session_id: str = None):
         super().__init__(
             name="Ishaan",
             role="Disruption Scenario Generator (Chaos Engineer)",
+            session_id=session_id,
             system_prompt=ISHAAN_SYSTEM_PROMPT,
             tools=ISHAAN_SPECIFIC_TOOLS,
             user_id=task_id

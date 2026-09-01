@@ -63,13 +63,14 @@ Do not wrap the JSON in markdown blocks like ```json, just return the raw JSON s
 """
 
 class MiraAgent(IntelligenceBaseAgent):
-    def __init__(self, task_id: str, user_id: str = "system"):
+    def __init__(self, task_id: str = "default", user_id: str = "system", session_id: str = None):
         super().__init__(
             name="Mira", 
             role="market_intelligence", 
             system_prompt=MIRA_PROMPT, 
             user_id=user_id,
-            tools=INTELLIGENCE_TOOLS + MIRA_SPECIFIC_TOOLS
+            tools=INTELLIGENCE_TOOLS + MIRA_SPECIFIC_TOOLS,
+            session_id=session_id
         )
         self.task_id = task_id
 

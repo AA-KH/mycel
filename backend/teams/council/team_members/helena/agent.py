@@ -12,10 +12,11 @@ from teams.council.team_members.helena.tools import (
 )
 
 class HelenaAgent(CouncilBaseAgent):
-    def __init__(self, task_id: str = "default"):
+    def __init__(self, task_id: str = "default", session_id: str = None):
         super().__init__(
             name="Helena",
             role="Cost Strategist (Council)",
+            session_id=session_id,
             system_prompt=HELENA_SYSTEM_PROMPT,
             tools=HELENA_SPECIFIC_TOOLS,
             user_id=task_id

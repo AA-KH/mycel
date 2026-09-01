@@ -15,11 +15,11 @@ class BaseAgent:
     Provides the foundational logic for legacy agents.
     Slated for complete removal once the new AgentRuntime fully subsumes all execution lifecycles.
     """
-    def __init__(self, name: str, role: str, system_prompt: str, user_id: str = "system"):
+    def __init__(self, name: str, role: str, system_prompt: str, user_id: str = "system", session_id: str = None):
         self.name = name
         self.role = role
         self.system_prompt = system_prompt
-        self.session_id = str(uuid.uuid4())
+        self.session_id = session_id or str(uuid.uuid4())
         self.user_id = user_id
 
     async def report_status(self, state: str, summary: str, event_type: str = "status_update", break_activity: str | None = None):
@@ -48,6 +48,15 @@ class BaseAgent:
                 {"$set": session_data},
                 upsert=True
             )
+            
+            await db.agent_logs.insert_one({
+                "session_id": self.session_id,
+                "agent_name": self.name,
+                "role": self.role,
+                "status": state,
+                "summary": summary,
+                "timestamp": now
+            })
             
             ws_data = session_data.copy()
             ws_data["last_heartbeat_at"] = ws_data["last_heartbeat_at"].isoformat()

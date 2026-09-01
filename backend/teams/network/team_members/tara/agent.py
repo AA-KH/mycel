@@ -3,7 +3,7 @@ from teams.network.team_members.tara.prompt import TARA_SYSTEM_PROMPT
 from teams.network.team_members.tara.tools import TARA_SPECIFIC_TOOLS, calculate_storage_utilization, schedule_dock_appointments, calculate_throughput_bottleneck
 
 class TaraAgent(NetworkBaseAgent):
-    def __init__(self, task_id: str = "default"):
+    def __init__(self, task_id: str = "default", session_id: str = None):
         system_prompt = f"{TARA_SYSTEM_PROMPT}\n\n{MATH_REASONING_INSTRUCTIONS}"
         
         # Combine base network tools with Tara's specific tools
@@ -14,7 +14,8 @@ class TaraAgent(NetworkBaseAgent):
             role="Operations Scheduler",
             system_prompt=system_prompt,
             user_id=task_id,
-            tools=combined_tools
+            tools=combined_tools,
+            session_id=session_id
         )
         
     async def execute_tool(self, function_name: str, arguments: dict) -> str:

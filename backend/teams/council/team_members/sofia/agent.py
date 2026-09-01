@@ -9,13 +9,14 @@ from teams.council.team_members.sofia.tools import (
 )
 
 class SofiaAgent(CouncilBaseAgent):
-    def __init__(self, task_id: str = "default"):
+    def __init__(self, task_id: str = "default", session_id: str = None):
         super().__init__(
             name="Sofia",
             role="Council Chair",
             system_prompt=SOFIA_SYSTEM_PROMPT,
             tools=SOFIA_SPECIFIC_TOOLS,
-            user_id=task_id
+            user_id=task_id,
+            session_id=session_id
         )
 
     async def execute_tool(self, function_name: str, arguments: dict):

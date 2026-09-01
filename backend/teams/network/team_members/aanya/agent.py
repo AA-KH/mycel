@@ -3,7 +3,7 @@ from teams.network.team_members.aanya.prompt import AANYA_SYSTEM_PROMPT
 from teams.network.team_members.aanya.tools import AANYA_SPECIFIC_TOOLS, calculate_center_of_gravity, estimate_facility_cost
 
 class AanyaAgent(NetworkBaseAgent):
-    def __init__(self, task_id: str = "default"):
+    def __init__(self, task_id: str = "default", session_id: str = None):
         system_prompt = f"{AANYA_SYSTEM_PROMPT}\n\n{MATH_REASONING_INSTRUCTIONS}"
         
         # Combine base network tools with Aanya's specific tools
@@ -14,7 +14,8 @@ class AanyaAgent(NetworkBaseAgent):
             role="Network Architect",
             system_prompt=system_prompt,
             user_id=task_id,
-            tools=combined_tools
+            tools=combined_tools,
+            session_id=session_id
         )
         
     async def execute_tool(self, function_name: str, arguments: dict) -> str:

@@ -5,12 +5,13 @@ from .prompt import SYSTEM_PROMPT
 from .tools import get_tools
 
 class AtlasAgent(ArchitectureBaseAgent):
-    def __init__(self):
+    def __init__(self, session_id: str = None):
         super().__init__(
             name=NAME,
             role=ROLE,
             system_prompt=SYSTEM_PROMPT,
-            agent_tools=get_tools()
+            agent_tools=get_tools(),
+            session_id=session_id
         )
 
     async def execute_tool(self, function_name: str, arguments: dict):
