@@ -13,7 +13,6 @@ from organization.company.repository import CompanyRepository
 from teams.developer.common.skills.skills import ENGINEERING_SKILLS
 from teams.research.common.skills.skills import RESEARCH_SKILLS
 from teams.legal.common.skills.skills import LEGAL_SKILLS
-from teams.creative.common.skills.skills import CREATIVE_SKILLS
 from teams.finance.common.skills.skills import FINANCE_SKILLS
 from workforce.skills.shared_catalogue import SHARED_SKILLS
 
@@ -34,7 +33,7 @@ async def seed_skills():
     team_skill_service = TeamSkillService(team_skill_repo, skill_service, team_registry, publisher)
     
     # 1. Create all skills
-    all_skills = ENGINEERING_SKILLS + RESEARCH_SKILLS + LEGAL_SKILLS + CREATIVE_SKILLS + FINANCE_SKILLS + SHARED_SKILLS
+    all_skills = ENGINEERING_SKILLS + RESEARCH_SKILLS + LEGAL_SKILLS + FINANCE_SKILLS + SHARED_SKILLS
     for skill_data in all_skills:
         existing = await skill_repo.get_by_skill_id(skill_data["skill_id"])
         if not existing:

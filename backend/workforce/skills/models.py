@@ -22,7 +22,6 @@ class SkillCategory(str, Enum):
     TECHNICAL = "technical"
     RESEARCH = "research"
     ANALYTICAL = "analytical"
-    CREATIVE = "creative"
     COMMUNICATION = "communication"
     LEGAL = "legal"
     BUSINESS = "business"

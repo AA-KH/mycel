@@ -18,7 +18,10 @@ class ArchitectureBaseAgent(BaseAgent):
 
     def __init__(self, name: str, role: str, system_prompt: str, agent_tools: list = None, session_id: str = None):
         super().__init__(name=name, role=role, system_prompt=system_prompt, session_id=session_id)
+        from tools.implementations.document import SEARCH_DOCUMENTS_TOOL
         self.agent_tools = agent_tools or []
+        if SEARCH_DOCUMENTS_TOOL not in self.agent_tools:
+            self.agent_tools.append(SEARCH_DOCUMENTS_TOOL)
 
     async def execute_tool(self, function_name: str, arguments: dict) -> Any:
         """
@@ -38,6 +41,9 @@ class ArchitectureBaseAgent(BaseAgent):
                 arguments.get("schema", {}),
                 arguments.get("sample_data", {})
             )
+        elif function_name == "search_internal_documents":
+            from tools.implementations.document import search_internal_documents
+            return str(search_internal_documents(arguments.get("query", ""), arguments.get("top_k", 3)))
         else:
             return f"Error: Tool '{function_name}' not recognized by ArchitectureBaseAgent."
 
