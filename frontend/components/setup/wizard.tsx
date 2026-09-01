@@ -6,11 +6,13 @@ import { PixelButton, PixelChip, ProgressSquares } from '@/components/pixel/pixe
 import { PixelWorld } from '@/components/pixel/pixel-scene'
 import {
   EMPTY_DATA,
+  StepBudget,
   StepBusinessType,
   StepConstraints,
   StepPriorities,
   StepScale,
   StepSupplying,
+  StepTimeline,
   StepUpload,
   StepWhere,
   type SetupData,
@@ -21,10 +23,15 @@ const STEPS = [
   { kicker: 'What are you supplying?', component: StepSupplying },
   { kicker: 'Where?', component: StepWhere },
   { kicker: 'How much?', component: StepScale },
+  { kicker: 'By when?', component: StepTimeline },
+  { kicker: 'At what cost?', component: StepBudget },
   { kicker: 'What matters?', component: StepPriorities },
   { kicker: 'What do we already know?', component: StepConstraints },
   { kicker: 'Upload your data', component: StepUpload },
 ]
+
+const TOTAL = STEPS.length
+const pad = (n: number) => String(n).padStart(2, '0')
 
 export function SetupWizard() {
   const [step, setStep] = useState(0)
@@ -49,7 +56,7 @@ export function SetupWizard() {
 
       {/* header */}
       <header className="relative z-10 flex shrink-0 items-start justify-between px-4 pb-2 pt-4 md:px-8 md:pt-5">
-        <PixelChip variant="yellow">{`Step 0${step + 1} of 07`}</PixelChip>
+        <PixelChip variant="yellow">{`Step ${pad(step + 1)} of ${pad(TOTAL)}`}</PixelChip>
         <div className="flex items-center gap-3">
           <PixelChip variant="cream" className="hidden sm:inline-block">
             Building your network
@@ -66,7 +73,7 @@ export function SetupWizard() {
       {/* panel region — fills remaining height, never overflows the page */}
       <div className="relative z-10 mx-auto flex w-full max-w-3xl min-h-0 flex-1 flex-col px-4 pb-[10svh] pt-1 sm:px-6">
         <h1 className="mb-3 shrink-0 font-mono text-xs uppercase tracking-widest text-foreground sm:text-sm">
-          {`Step ${step + 1} of 7 · `}
+          {`Step ${step + 1} of ${TOTAL} · `}
           <span className="text-accent">{STEPS[step].kicker}</span>
         </h1>
 
@@ -78,7 +85,7 @@ export function SetupWizard() {
 
           {/* nav pinned inside the panel, always visible */}
           <div className="flex shrink-0 items-center justify-between gap-4 border-t-2 border-dashed border-foreground/30 bg-card px-5 py-3.5 sm:px-7">
-            <ProgressSquares total={7} current={step} />
+            <ProgressSquares total={TOTAL} current={step} />
             <div className="flex gap-3">
               {step > 0 ? (
                 <PixelButton variant="ghost" onClick={() => setStep((s) => s - 1)}>
@@ -139,6 +146,23 @@ function DoneScreen({ data }: { data: SetupData }) {
                 label="Reach"
                 value={[data.supplySource, data.customerAreas].filter(Boolean).join(' -> ') || 'To be mapped'}
               />
+              <SummaryRow
+                label="Scale"
+                value={
+                  [data.volume, data.peakSurge ? `peaks at ${data.peakSurge}` : '']
+                    .filter(Boolean)
+                    .join(' · ') || 'To be estimated'
+                }
+              />
+              <SummaryRow
+                label="Timeline"
+                value={
+                  data.timeline === 'Fixed launch date' && data.targetDate
+                    ? data.targetDate
+                    : data.timeline || 'Flexible'
+                }
+              />
+              <SummaryRow label="Budget stance" value={data.budgetTolerance || 'Balanced'} />
               <SummaryRow
                 label="Optimizing for"
                 value={topPriorities.length > 0 ? topPriorities.join(', ') : 'Balanced network'}
