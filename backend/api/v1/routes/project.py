@@ -7,6 +7,7 @@ from api.v1.schemas.project import ProjectPayload
 from core.mongodb import mongodb_connection
 from core.logger import logger
 from teams.architecture.team import architecture_team
+from teams.executive.team_members.maya.agent import MayaHRAgent
 
 router = APIRouter()
 
@@ -40,14 +41,53 @@ def construct_master_prompt(payload: ProjectPayload) -> str:
 
 async def run_agents_in_background(project_id: str, master_prompt: str):
     """
-    Runs the architecture team analysis in the background and updates the database with the final report.
+    Runs the HR agent to hire a team, then runs the architecture team analysis.
     """
     try:
-        logger.info(f"Starting background architecture review for project {project_id}")
-        report = await architecture_team.run_architecture_review(master_prompt)
+        logger.info(f"Starting background HR review for project {project_id}")
+        
+        # 1. Maya (HR) Phase
+        maya = MayaHRAgent(session_id=project_id)
+        maya_prompt = f"Review the following project and hire a team:\n\n{master_prompt}"
+        maya_response = await maya.run_task(maya_prompt)
+        
+        # Parse Maya's output to find hired_personnel (assuming she returned JSON)
+        import json
+        import re
+        
+        # Default fallback
+        hired_personnel = [
+            {"agent_id": "architecture_ethan", "name": "Ethan", "role": "Independent Validator", "team": "ARCHITECTURE", "badge": "MYC-020-ETH", "mandate": "Default validation", "status": "GREEN"},
+            {"agent_id": "architecture_priya", "name": "Priya", "role": "Implementation Planner", "team": "ARCHITECTURE", "badge": "MYC-019-PRI", "mandate": "Default planning", "status": "GREEN"},
+            {"agent_id": "architecture_rohan", "name": "Rohan", "role": "Master Supply-Chain Architect", "team": "ARCHITECTURE", "badge": "MYC-018-ROH", "mandate": "Default routing", "status": "GREEN"},
+            {"agent_id": "architecture_atlas", "name": "Atlas", "role": "Executive Orchestrator", "team": "ARCHITECTURE", "badge": "MYC-017-ATL", "mandate": "Default orchestration", "status": "GREEN"}
+        ]
+        
+        hired_agent_ids = ["architecture_ethan", "architecture_priya", "architecture_rohan", "architecture_atlas"]
+        
+        try:
+            # Try to extract the JSON payload she generated via tool
+            match = re.search(r'\{.*"hired_personnel":\s*\[.*?\]\}', maya_response, re.DOTALL)
+            if match:
+                parsed = json.loads(match.group(0))
+                hired_personnel = parsed.get("hired_personnel", hired_personnel)
+                hired_agent_ids = [p["agent_id"] for p in hired_personnel if "agent_id" in p]
+        except Exception as e:
+            logger.warning(f"Failed to parse Maya's output for hired personnel, defaulting to core team. Error: {e}")
+
+        logger.info(f"Maya hired the following team: {hired_agent_ids}")
+
+        db = mongodb_connection.client.get_database("mycel")
+        # Save hired team to DB immediately so frontend can show them
+        await db.projects.update_one(
+            {"project_id": project_id},
+            {"$set": {"hired_team": hired_personnel}}
+        )
+
+        # 2. Architecture Phase
+        report = await architecture_team.run_architecture_review(master_prompt, hired_agent_ids)
         
         # Save final report to MongoDB
-        db = mongodb_connection.client.get_database("mycel")
         await db.projects.update_one(
             {"project_id": project_id},
             {"$set": {
