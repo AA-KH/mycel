@@ -80,7 +80,12 @@ class ResilienceBaseAgent(BaseAgent):
                 response_message = response.choices[0].message
                 
                 if response_message.tool_calls:
-                    messages.append(response_message.model_dump(exclude_unset=True))
+                    assistant_msg = response_message.model_dump(exclude_unset=True)
+                    if assistant_msg.get("content") and isinstance(assistant_msg["content"], str):
+                        assistant_msg["content"] = re.sub(r'<think>.*?</think>', '', assistant_msg["content"], flags=re.DOTALL).strip()
+                        if not assistant_msg["content"]:
+                            assistant_msg.pop("content", None)
+                    messages.append(assistant_msg)
                     
                     for tool_call in response_message.tool_calls:
                         function_name = tool_call.function.name
