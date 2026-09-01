@@ -64,6 +64,12 @@ class Settings(BaseSettings):
     groq_api_key_anika: str = ""
     groq_api_key_noor: str = ""
 
+    # Network Agent specific keys
+    groq_api_key_aanya: str = ""
+    groq_api_key_dev: str = ""
+    groq_api_key_kabir: str = ""
+    groq_api_key_tara: str = ""
+
     # Real Estate Domain Demo
     re_voice_mode: str = "browser"              # "browser" | "voicelink" | "groq_whisper"
     re_demo_customer_id: str = "kaushal"

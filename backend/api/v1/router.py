@@ -5,7 +5,7 @@ Consolidates all v1 specific endpoints.
 
 from fastapi import APIRouter
 from .routes import health, employees
-from .routes import companies, departments, teams, positions, skills, tools, knowledge, reasoning, pipelines, stage_definitions, quality, outputs, intelligence
+from .routes import companies, departments, teams, positions, skills, tools, knowledge, reasoning, pipelines, stage_definitions, quality, outputs, intelligence, network
 
 router = APIRouter()
 
@@ -26,6 +26,7 @@ router.include_router(quality.router, tags=["Quality"])
 router.include_router(employees.router, tags=["Employees"])
 
 router.include_router(intelligence.router, tags=["Intelligence Team"])
+router.include_router(network.router, tags=["Network Team"])
 
 # Real-time WebSocket and broadcast
 from .routes.realtime import router as realtime_router

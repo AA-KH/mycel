@@ -112,6 +112,12 @@ _TEAM_KEY_MAP: Dict[str, str] = {
     "ravi":        "groq_api_key_ravi",
     "anika":       "groq_api_key_anika",
     "noor":        "groq_api_key_noor",
+    
+    # Network Agents
+    "aanya":       "groq_api_key_aanya",
+    "dev":         "groq_api_key_dev",
+    "kabir":       "groq_api_key_kabir",
+    "tara":        "groq_api_key_tara",
 }
 
 
