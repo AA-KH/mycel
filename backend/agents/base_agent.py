@@ -55,7 +55,7 @@ class BaseAgent:
             import httpx
             try:
                 async with httpx.AsyncClient() as client:
-                    await client.post("http://127.0.0.1:8000/api/v1/broadcast", json=ws_data)
+                    await client.post("http://127.0.0.1:8000/api/realtime/broadcast", json=ws_data)
             except Exception as e:
                 logger.error(f"Failed to broadcast status: {e}")
         except Exception as e:
