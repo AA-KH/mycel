@@ -1,0 +1,14 @@
+{
+  "id": "TOILET_DOOR_WOMEN",
+  "name": "Toilet Door (Women)",
+  "category": "wall",
+  "type": "asset",
+  "file": "TOILET_DOOR_WOMEN.png",
+  "width": 16,
+  "height": 32,
+  "footprintW": 1,
+  "footprintH": 2,
+  "canPlaceOnWalls": true,
+  "canPlaceOnSurfaces": false,
+  "backgroundTiles": 0
+}

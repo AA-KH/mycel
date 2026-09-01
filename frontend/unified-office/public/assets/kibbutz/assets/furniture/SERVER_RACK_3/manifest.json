@@ -1,0 +1,9 @@
+{
+  "id": "SERVER_RACK_3",
+  "name": "Patch Panel",
+  "category": "electronics",
+  "width": 16,
+  "height": 32,
+  "footprintW": 1,
+  "footprintH": 2
+}

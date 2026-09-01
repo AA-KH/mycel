@@ -1,0 +1,14 @@
+{
+  "id": "WOOD_DOOR",
+  "name": "Door",
+  "category": "wall",
+  "type": "asset",
+  "file": "WOOD_DOOR.png",
+  "width": 16,
+  "height": 32,
+  "footprintW": 1,
+  "footprintH": 2,
+  "canPlaceOnWalls": false,
+  "canPlaceOnSurfaces": false,
+  "backgroundTiles": 0
+}
