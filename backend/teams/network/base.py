@@ -8,6 +8,7 @@ from core.groq_engine import engine_manager
 
 # Import actual python functions for network tools
 from teams.network.shared_tools import calculate_distance, calculate_eoq
+from tools.implementations.document import search_internal_documents, SEARCH_DOCUMENTS_TOOL
 
 logger = logging.getLogger(__name__)
 
@@ -33,7 +34,8 @@ NETWORK_TOOLS = [
                 "required": ["city1", "city2"]
             }
         }
-    }
+    },
+    SEARCH_DOCUMENTS_TOOL
 ]
 
 
@@ -63,6 +65,8 @@ class NetworkBaseAgent(BaseAgent):
                 arguments.get("ordering_cost", 0), 
                 arguments.get("holding_cost", 0)
             )
+        elif function_name == "search_internal_documents":
+            return str(search_internal_documents(arguments.get("query", ""), arguments.get("top_k", 3)))
         else:
             return f"Error: Tool {function_name} not found in Network Base Agent."
 

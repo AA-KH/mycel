@@ -22,6 +22,8 @@ loguru~=0.7.2
 # LLMs & AI
 groq~=0.4.2
 google-generativeai>=0.5.0
+faiss-cpu>=1.7.4
+sentence-transformers>=2.2.2
 
 # Integrations
 cloudinary~=1.36.0
@@ -37,7 +39,7 @@ fpdf2>=2.7.9
 xlrd>=2.0.1
 
 # Web Research
-duckduckgo-search>=7.0.0
+ddgs>=9.16.0
 beautifulsoup4>=4.12.0
 lxml>=5.0.0
 trafilatura>=2.0.0

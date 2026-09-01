@@ -5,13 +5,14 @@ Consolidates all v1 specific endpoints.
 
 from fastapi import APIRouter
 from .routes import health, employees
-from .routes import companies, departments, teams, positions, skills, tools, knowledge, reasoning, pipelines, stage_definitions, quality, outputs, intelligence, network, resilience, council, project, agents
+from .routes import companies, departments, teams, positions, skills, tools, knowledge, reasoning, pipelines, stage_definitions, quality, outputs, intelligence, network, resilience, council, project, agents, documents
 
 router = APIRouter()
 
 # Register v1 routes
 router.include_router(health.router, tags=["System"])
 router.include_router(agents.router, prefix="/agents", tags=["Agents"])
+router.include_router(documents.router, tags=["Documents"])
 router.include_router(companies.router, tags=["Organization (Companies)"])
 router.include_router(departments.router, tags=["Organization (Departments)"])
 router.include_router(teams.router, tags=["Organization (Teams)"])

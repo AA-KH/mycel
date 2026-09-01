@@ -74,6 +74,15 @@ class RobustGroqClient:
         """
         import re
         import time
+        
+        # Anti-Hallucination injection for Groq Llama models
+        if "tools" in kwargs:
+            anti_hal = "\nCRITICAL: When calling a tool, output the EXACT tool name. NEVER append '<|channel|>commentary' or any other suffix."
+            for m in messages:
+                if m.get("role") == "system" and anti_hal not in m.get("content", ""):
+                    m["content"] = str(m.get("content", "")) + anti_hal
+                    break
+                    
         attempts = 0
         max_attempts = 100 # Extremely high so we can cycle through 25+ keys multiple times if needed
 

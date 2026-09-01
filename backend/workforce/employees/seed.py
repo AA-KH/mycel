@@ -6,9 +6,8 @@ from workforce.employees.repositories import EmployeeRepository
 from workforce.employees.validators import EmployeeDefinitionValidator
 from teams.developer.team_members.emp_kabir_sharma.profile import kabir
 from teams.research.team_members.emp_aarav_mehta.profile import aarav
-from teams.creative.team_members.emp_riya_sharma.profile import riya
 
-CATALOGUE_EMPLOYEES = [kabir, aarav, riya]
+CATALOGUE_EMPLOYEES = [kabir, aarav]
 
 logger = logging.getLogger(__name__)
 

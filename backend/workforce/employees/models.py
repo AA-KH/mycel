@@ -32,7 +32,6 @@ class EmployeeIdentity(BaseModel):
 
 class PersonalityTraits(BaseModel):
     analytical: int = Field(ge=0, le=100, default=50)
-    creative: int = Field(ge=0, le=100, default=50)
     cautious: int = Field(ge=0, le=100, default=50)
     proactive: int = Field(ge=0, le=100, default=50)
 
