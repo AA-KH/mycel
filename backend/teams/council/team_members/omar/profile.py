@@ -7,10 +7,10 @@ omar = Employee(
     identity=EmployeeIdentity(
         first_name="Omar",
         last_name="",
-        title="Risk/compliance strategist",
+        title="Risk & Compliance Strategist",
         specialization="scm_council",
         seniority="Senior",
-        background="Expert in Risk/compliance strategist."
+        background="Expert in multi-framework regulatory compliance (GDPR, FCPA, OFAC, ISO 37001, REACH/RoHS), sanctions screening, and enterprise risk governance."
     ),
     reasoning_profile_id="standard"
 )

@@ -7,10 +7,10 @@ sofia = Employee(
     identity=EmployeeIdentity(
         first_name="Sofia",
         last_name="",
-        title="Council chair",
+        title="Council Chair",
         specialization="scm_council",
-        seniority="Senior",
-        background="Expert in Council chair."
+        seniority="Executive",
+        background="Strategic integrator and final decision-maker. Synthesizes recommendations from Cost, Resilience, Operations, and Compliance perspectives into binding Council resolutions."
     ),
     reasoning_profile_id="standard"
 )

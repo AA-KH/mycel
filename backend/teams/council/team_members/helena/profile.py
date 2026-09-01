@@ -7,10 +7,10 @@ helena = Employee(
     identity=EmployeeIdentity(
         first_name="Helena",
         last_name="",
-        title="Cost strategist",
+        title="Cost Strategist",
         specialization="scm_council",
         seniority="Senior",
-        background="Expert in Cost strategist."
+        background="Expert in cost benchmarking, unit economics, supplier pricing analysis, and strategic investment ROI evaluation."
     ),
     reasoning_profile_id="standard"
 )

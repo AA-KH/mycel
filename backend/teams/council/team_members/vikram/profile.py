@@ -7,10 +7,10 @@ vikram = Employee(
     identity=EmployeeIdentity(
         first_name="Vikram",
         last_name="",
-        title="Resilience strategist",
+        title="Resilience Strategist",
         specialization="scm_council",
         seniority="Senior",
-        background="Expert in Resilience strategist."
+        background="Expert in supply chain resilience scoring, dual-source contingency planning, geopolitical risk assessment, and structural fragility analysis."
     ),
     reasoning_profile_id="standard"
 )

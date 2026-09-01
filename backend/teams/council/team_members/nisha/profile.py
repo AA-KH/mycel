@@ -7,10 +7,10 @@ nisha = Employee(
     identity=EmployeeIdentity(
         first_name="Nisha",
         last_name="",
-        title="Operations strategist",
+        title="Operations Strategist",
         specialization="scm_council",
         seniority="Senior",
-        background="Expert in Operations strategist."
+        background="Expert in operational efficiency auditing, OEE analysis, throughput optimization, and translating strategic decisions into executable operational plans."
     ),
     reasoning_profile_id="standard"
 )
