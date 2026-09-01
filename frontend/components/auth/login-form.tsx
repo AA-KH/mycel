@@ -27,8 +27,14 @@ function FieldLabel({ children, htmlFor }: { children: React.ReactNode; htmlFor:
 const inputClasses =
   'w-full border-2 border-foreground bg-background px-4 py-3.5 text-base placeholder:text-muted-foreground/60 focus:bg-card focus:outline-none focus:ring-2 focus:ring-accent lg:py-4'
 
-export function LoginForm() {
+/**
+ * `next` is an optional in-app path to return to after a successful sign-in
+ * (e.g. an operator bounced off /setup). Ignored unless it is a relative path,
+ * so it can never be used as an open redirect.
+ */
+export function LoginForm({ next }: { next?: string }) {
   const router = useRouter()
+  const safeNext = next && /^\/(?!\/)/.test(next) ? next : null
   const [mode, setMode] = useState<Mode>('login')
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
@@ -74,7 +80,10 @@ export function LoginForm() {
           ? await fetchSetupStatus(session.access_token)
           : { has_setup: false, setup: null }
 
-      if (status.has_setup) {
+      if (safeNext) {
+        setStatusLine('Resuming where you left off')
+        router.push(safeNext)
+      } else if (status.has_setup) {
         setStatusLine('Network found — entering mission control')
         router.push('/control')
       } else {
@@ -145,8 +154,8 @@ export function LoginForm() {
       >
         <p className="font-mono text-[10px] uppercase leading-relaxed tracking-widest text-accent">
           {mode === 'login'
-            ? '> Verify credentials to resume your network'
-            : '> Register a new operator with the network'}
+            ? '> Verify credentials to resume'
+            : '> Register a new operator'}
           <span className="blink">_</span>
         </p>
 

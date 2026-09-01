@@ -8,7 +8,13 @@ export const metadata: Metadata = {
   description: 'Authenticate to access the MYCEL supply-chain control room.',
 }
 
-export default function LoginPage() {
+export default async function LoginPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ next?: string }>
+}) {
+  const { next } = await searchParams
+
   return (
     <main className="pixel-grid diag-texture relative min-h-svh bg-gradient-to-br from-[#bcd8ce] via-background to-[#eec98f]">
       <div className="mx-auto flex min-h-svh w-full max-w-[1600px] flex-col gap-6 p-4 sm:p-6 lg:h-svh lg:gap-8 lg:p-10 xl:p-14">
@@ -37,7 +43,7 @@ export default function LoginPage() {
                 {'> Operator authentication required'}
                 <span className="blink">_</span>
               </p>
-              <h1 className="mt-4 text-balance font-mono text-3xl uppercase leading-tight tracking-wider sm:text-4xl lg:text-5xl xl:text-6xl">
+              <h1 className="mt-4 text-balance font-mono text-3xl uppercase leading-tight tracking-wider sm:text-4xl lg:text-[2.75rem] xl:text-5xl 2xl:text-6xl">
                 Your supply chain
                 <br />
                 is <span className="text-accent">already running</span>
@@ -57,7 +63,7 @@ export default function LoginPage() {
           {/* right — auth terminal */}
           <section className="boot-in boot-delay-3 flex min-h-0 items-center">
             <div className="w-full">
-              <LoginForm />
+              <LoginForm next={next} />
             </div>
           </section>
         </div>

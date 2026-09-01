@@ -36,6 +36,18 @@ export function BootConsole() {
       return
     }
 
+    // Pre-fill so the console reads as an already-running system, then keep streaming.
+    const SEED = 6
+    setLogs(
+      AGENTS.slice(0, SEED).map((a, i) => ({
+        id: i,
+        tag: a.tag,
+        line: a.line,
+        ok: true,
+      })),
+    )
+    idRef.current = SEED
+
     const timer = setInterval(() => {
       const next = AGENTS[idRef.current % AGENTS.length]
       const id = idRef.current++
@@ -75,7 +87,7 @@ export function BootConsole() {
         role="log"
         aria-live="polite"
         aria-label="MYCEL network boot log"
-        className="pixel-scroll min-h-0 flex-1 overflow-y-auto p-4 font-mono text-[10px] leading-relaxed lg:p-5 lg:text-[11px]"
+        className="pixel-scroll flex min-h-0 flex-1 flex-col justify-end overflow-y-auto p-4 font-mono text-[10px] leading-relaxed lg:p-5 lg:text-[11px]"
       >
         {logs.map((log) => (
           <p key={log.id} className="step-enter flex gap-2 py-1">
