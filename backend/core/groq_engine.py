@@ -56,8 +56,9 @@ class RobustGroqClient:
         Execute a chat completion with automatic key-rotation on rate limits.
         Tries every key in the pool before giving up.
         """
+        import re
         attempts = 0
-        max_attempts = max(len(self.clients) * 2, 2)
+        max_attempts = 10  # Increased to guarantee output by waiting out limits
 
         while attempts < max_attempts:
             client = self._get_client()
@@ -71,16 +72,31 @@ class RobustGroqClient:
 
             except (RateLimitError, APIStatusError) as e:
                 status_code = getattr(e, "status_code", None)
-                if status_code in (429, 401, 403):
+                if status_code == 429:
+                    error_msg = str(e)
+                    # Try to parse "Please try again in 8.879s"
+                    wait_match = re.search(r"try again in (\d+\.?\d*)s", error_msg)
+                    if wait_match:
+                        wait_time = float(wait_match.group(1)) + 1.0  # 1s buffer
+                    else:
+                        wait_time = 10.0 # Default fallback
+                        
                     logger.warning(
-                        f"[GroqEngine:{self.team_id}] Key {self._current_idx} error ({status_code}): {e}"
+                        f"[GroqEngine:{self.team_id}] Rate Limit 429 hit. Waiting {wait_time:.1f}s before retry... (Attempt {attempts+1}/{max_attempts})"
+                    )
+                    
+                    # Try to rotate key if we have multiple, otherwise just sleep on current key
+                    if len(self.clients) > 1:
+                        self._rotate_client()
+                        
+                    await asyncio.sleep(wait_time)
+                elif status_code in (401, 403):
+                    logger.warning(
+                        f"[GroqEngine:{self.team_id}] Key {self._current_idx} Auth error ({status_code}): {e}"
                     )
                     can_rotate = self._rotate_client()
                     if not can_rotate:
-                        logger.info(
-                            f"[GroqEngine:{self.team_id}] Single key pool, backing off 2s..."
-                        )
-                        await asyncio.sleep(2)
+                        raise e # No other keys to try
                 else:
                     raise
             except Exception as e:
