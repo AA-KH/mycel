@@ -19,6 +19,7 @@ export type AgentDossier = {
 
 /* one-line taglines for the compact directory list */
 export const AGENT_TAGLINES: Record<string, string> = {
+  Maya: 'The AI hiring engine — reads the brief and assembles the task force before anyone else wakes up.',
   Atlas: 'The organizational brain — plans, delegates, and decides when research is done.',
   Mira: 'Maps demand, assortment, and category trends into base / low / high scenarios.',
   Ravi: 'Builds the supplier universe for every required category and component.',
@@ -44,9 +45,40 @@ export const AGENT_TAGLINES: Record<string, string> = {
 
 export const AGENT_DOSSIERS: Record<string, AgentDossier> = {
   /* ---------------- TEAM 0 — EXECUTIVE ---------------- */
+  Maya: {
+    mission:
+      'Chief Resource Allocator — the AI hiring engine and the very first agent to activate on any mission. Maya is not a researcher and not an orchestrator: her single job is to read the brief and decide exactly which specialists get hired onto this project.',
+    responsibilities: [
+      'Receive and parse the incoming mission payload',
+      'Understand product, geography, constraints, and priorities',
+      'Query the live agent registry for availability and SCM skills',
+      'Match project requirements against each agent\u2019s specialization',
+      'Hire the minimum viable task force — never all 21 agents by default',
+      'Record the hiring rationale for every agent selected',
+      'Hand the assembled task force over to Atlas for orchestration',
+    ],
+    tools: ['query_available_agents()', 'hire_team()'],
+    workflow: [
+      'Mission payload arrives \u2192 Maya activates before any other agent',
+      'query_available_agents() \u2014 reads the live registry: who is available and what can they do?',
+      'Reasons over the brief: what makes this project hard? which skills are actually load-bearing?',
+      'hire_team() \u2014 returns the agent IDs plus explicit reasoning for each',
+      'Only the hired agents wake up; the rest stay on standby \u2014 saving time, cost, and tokens',
+    ],
+    output: {
+      title: 'Hiring decision \u2014 semiconductors, TW \u2192 US',
+      lines: [
+        'HIRED:  Vikram   \u2014 tariff & sanction exposure',
+        '        Rohan    \u2014 physical port routing (TW\u2192LA)',
+        '        Ethan    \u2014 port-blockade resilience test',
+        '        Atlas    \u2014 executive blueprint assembly',
+        'SKIPPED: 17 agents \u2014 not load-bearing for this brief',
+      ],
+    },
+  },
   Atlas: {
     mission:
-      'Chief Supply Chain Officer, program manager, and orchestrator in one. Atlas is not a researcher and not the final answer generator — it runs the organization that produces the answer.',
+      'Chief Supply Chain Officer, program manager, and orchestrator in one. Atlas is not a researcher, not the recruiter, and not the final answer generator — it runs the organization that produces the answer, using the task force Maya hired.',
     responsibilities: [
       'Interpret the user\u2019s inputs and mission brief',
       'Determine what information is missing',
@@ -59,20 +91,22 @@ export const AGENT_DOSSIERS: Record<string, AgentDossier> = {
       'Commission and present the final architecture',
     ],
     workflow: [
+      'Receives the hired task force from Maya — hiring is not Atlas\u2019s job',
       'Progressive context acquisition — never 50 mandatory questions up front',
       'Starts with: what are you making? where are you selling? expected volume?',
       'Then: "we can produce a better architecture if you provide any of the following\u2026"',
       'Updates its understanding as the user adds BOM, pricing, lead-time, or location detail',
-      'Spins up the five teams and routes findings between them',
+      'Activates the hired cabins and routes findings between them',
     ],
     output: {
       title: 'Master research plan',
       lines: [
         'MISSION: 100,000 pencils / year, India',
+        'TASK FORCE: 9 agents hired by Maya',
         'MISSING: BOM detail, target COGS, max lead time',
         'PLAN: Intelligence \u2192 Network \u2192 Resilience',
         '      \u2192 Council debate \u2192 Architecture Studio',
-        'STATUS: delegating to 5 teams\u2026',
+        'STATUS: delegating to hired cabins\u2026',
       ],
     },
   },
@@ -522,7 +556,7 @@ export const AGENT_DOSSIERS: Record<string, AgentDossier> = {
 /* team-level descriptions shown outside the member cards */
 export const TEAM_DESCRIPTIONS: Record<Team, string> = {
   Executive:
-    'One agent runs the whole floor. Atlas interprets the brief, builds the research plan, delegates to every cabin, and decides when the work is done.',
+    'Two agents run the whole floor. Maya goes first — she reads the brief and hires only the specialists the mission needs. Atlas then takes that task force, builds the research plan, delegates to every hired cabin, and decides when the work is done.',
   Intelligence:
     'The research engine — the largest team, because architecture quality is limited by information quality. Four agents map demand, suppliers, category norms, and external risk.',
   Network:

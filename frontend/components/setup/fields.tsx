@@ -199,6 +199,34 @@ export function TextAreaField({
   )
 }
 
+/* Callout linking a question to the agent who consumes the answer */
+export function AgentNote({
+  agent,
+  role,
+  children,
+}: {
+  agent: string
+  role: string
+  children: ReactNode
+}) {
+  return (
+    <div className="flex items-start gap-3 border-2 border-dashed border-accent/60 bg-accent/5 px-3.5 py-3">
+      <span
+        aria-hidden="true"
+        className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center border-2 border-foreground bg-secondary font-mono text-[9px] uppercase tracking-wider pixel-shadow-sm"
+      >
+        {agent.slice(0, 2)}
+      </span>
+      <p className="text-[13px] leading-snug text-muted-foreground">
+        <span className="font-mono text-[9px] uppercase tracking-widest text-accent">
+          {agent} · {role}
+        </span>
+        <span className="mt-0.5 block">{children}</span>
+      </p>
+    </div>
+  )
+}
+
 /* Pixel-square weight picker: 0-5 blocks */
 export function WeightPicker({
   label,

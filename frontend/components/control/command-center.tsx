@@ -7,16 +7,14 @@ import type { MissionState } from '@/lib/mission-sim'
 import { AtlasLogTab } from './atlas-log'
 import { HireCardsTab } from './hire-cards'
 import { AgentRosterTab } from './agent-roster'
-import { TeamTab } from './team-tab'
 import { BlueprintTab } from './blueprint-tab'
 
-type TabId = 'atlas' | 'hires' | 'agents' | 'team' | 'blueprint'
+type TabId = 'atlas' | 'hires' | 'agents' | 'blueprint'
 
 const TABS: { id: TabId; label: string }[] = [
   { id: 'atlas', label: 'Atlas' },
   { id: 'hires', label: 'Hiring' },
   { id: 'agents', label: 'Agents' },
-  { id: 'team', label: 'Team' },
   { id: 'blueprint', label: 'Blueprint' },
 ]
 
@@ -47,7 +45,7 @@ export function CommandCenter({ mission }: { mission: MissionState }) {
             Command Center
           </h2>
           <p className="truncate font-mono text-[7px] uppercase tracking-widest text-secondary-foreground/70">
-            Atlas runs the floor
+            Maya hires {'\u00b7'} Atlas runs the floor
           </p>
         </div>
         <a
@@ -120,9 +118,6 @@ export function CommandCenter({ mission }: { mission: MissionState }) {
         </div>
         <div id="panel-agents" role="tabpanel" aria-labelledby="tab-agents" hidden={tab !== 'agents'} className="h-full">
           <AgentRosterTab agents={mission.agents} clock={mission.clock} />
-        </div>
-        <div id="panel-team" role="tabpanel" aria-labelledby="tab-team" hidden={tab !== 'team'} className="h-full">
-          <TeamTab />
         </div>
         <div
           id="panel-blueprint"

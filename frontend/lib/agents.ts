@@ -30,7 +30,11 @@ export const TEAM_COLORS: Record<Team, { bg: string; text: string; chip: string 
 export const AGENTS: AgentDef[] = [
   {
     name: 'Atlas', team: 'Executive', role: 'Chief Supply Chain Architect / Orchestrator', initials: 'AT', charIdx: 5,
-    detail: 'The organizational brain. Interprets the mission brief, determines what information is missing, builds the master research plan, hires and delegates to every cabin, monitors progress, resolves deadlocks, convenes the Strategy Council, and commissions the final architecture.',
+    detail: 'The organizational brain — but not the recruiter. Once Maya has assembled the task force, Atlas interprets the mission brief, determines what information is missing, builds the master research plan, delegates to every cabin, monitors progress, resolves deadlocks, convenes the Strategy Council, and commissions the final architecture.',
+  },
+  {
+    name: 'Maya', team: 'Executive', role: 'Chief Resource Allocator / AI Hiring Engine', initials: 'MA', charIdx: 4,
+    detail: 'The first decision-maker on every mission. Maya reads the incoming brief — product, geography, constraints, priorities — queries the live agent registry, and hires only the specialists the project actually needs. She is the reason a 21-agent organization runs as a 4-agent task force when that is all the problem requires.',
   },
   {
     name: 'Mira', team: 'Intelligence', role: 'Demand & assortment intelligence', initials: 'MI', charIdx: 0,

@@ -29,6 +29,33 @@ export function PixelChip({
   )
 }
 
+/** Small 5x5 pixel spore mark used as the MYCEL logotype glyph. */
+export function PixelSunMark({ className }: { className?: string }) {
+  const rows = [
+    [0, 1, 1, 1, 0],
+    [1, 1, 0, 1, 1],
+    [1, 0, 1, 0, 1],
+    [1, 1, 0, 1, 1],
+    [0, 1, 1, 1, 0],
+  ]
+  return (
+    <div
+      className={cn('grid shrink-0 grid-cols-5 gap-0', className)}
+      aria-hidden="true"
+    >
+      {rows.flat().map((on, i) => (
+        <span
+          key={i}
+          className={cn(
+            'h-1.5 w-1.5 sm:h-2 sm:w-2',
+            on ? (i % 3 === 0 ? 'bg-accent' : 'bg-foreground') : 'bg-transparent',
+          )}
+        />
+      ))}
+    </div>
+  )
+}
+
 export function PixelPanel({
   children,
   className,

@@ -61,13 +61,15 @@ type TimelineEvent =
 const s = (n: number) => n * 1000
 
 const TIMELINE: TimelineEvent[] = [
-  { at: s(0.5), kind: 'log', level: 'info', text: 'ATLAS online. Orchestrator booting from mission brief…' },
-  { at: s(1.4), kind: 'log', level: 'info', text: 'Parsing intake: business type, supply reach, priorities, constraints, uploaded files.' },
-  { at: s(2.4), kind: 'log', level: 'action', text: 'Mission decomposed into 5 workstreams: Intelligence, Network, Resilience, Council, Architecture.' },
+  { at: s(0.3), kind: 'log', level: 'info', text: 'MAYA online. Chief Resource Allocator receiving mission payload…' },
+  { at: s(1.0), kind: 'log', level: 'info', text: 'Maya parsing intake: business type, supply reach, priorities, constraints, uploaded files.' },
+  { at: s(1.8), kind: 'log', level: 'action', text: 'Maya → query_available_agents(): 21 specialists in registry, matching against mission requirements.' },
+  { at: s(2.6), kind: 'log', level: 'action', text: 'Maya assembling task force. Only load-bearing specialists will be hired — the rest stay on standby.' },
   { at: s(3.2), kind: 'log', level: 'armor', text: 'ArmorIQ handshake OK — delegated authority verified. GREEN actions autonomous, AMBER gated, RED blocked.' },
+  { at: s(3.7), kind: 'log', level: 'info', text: 'ATLAS online. Orchestrator standing by for Maya\u2019s task force.' },
 
   /* --- Intelligence wave --- */
-  { at: s(4.2), kind: 'log', level: 'action', text: 'Hiring Intelligence cabin — 4 specialists requested.' },
+  { at: s(4.2), kind: 'log', level: 'action', text: 'Maya → hire_team(): Intelligence cabin — 4 specialists. Reasoning: demand, supplier, benchmark & risk intel are all load-bearing.' },
   { at: s(4.8), kind: 'hire', agent: 'Mira', team: 'Intelligence', role: 'Market & demand intelligence', clearance: 'GREEN', mandate: 'Map demand signals across target customer regions.' },
   { at: s(5.6), kind: 'hire', agent: 'Ravi', team: 'Intelligence', role: 'Supplier intelligence', clearance: 'AMBER', mandate: 'Profile candidate suppliers; quotation requests require approval.' },
   { at: s(6.4), kind: 'hire', agent: 'Anika', team: 'Intelligence', role: 'Industry benchmarking', clearance: 'GREEN', mandate: 'Benchmark cost & lead-time against industry peers.' },
@@ -77,9 +79,10 @@ const TIMELINE: TimelineEvent[] = [
   { at: s(8.6), kind: 'start', agent: 'Anika', task: 'Pulling industry cost & lead-time benchmarks' },
   { at: s(9.0), kind: 'start', agent: 'Noor', task: 'Scoring geopolitical exposure per lane' },
   { at: s(9.6), kind: 'log', level: 'info', text: 'Intelligence cabin active. 4 agents running GREEN-class research.' },
+  { at: s(10.2), kind: 'log', level: 'action', text: 'Atlas decomposed the mission into 5 workstreams: Intelligence, Network, Resilience, Council, Architecture.' },
 
   /* --- Network wave --- */
-  { at: s(11.5), kind: 'log', level: 'action', text: 'Hiring Network cabin — network design & cost modeling.' },
+  { at: s(11.5), kind: 'log', level: 'action', text: 'Maya → hire_team(): Network cabin — topology & landed-cost modeling required for multi-region sourcing.' },
   { at: s(12.1), kind: 'hire', agent: 'Aanya', team: 'Network', role: 'Supply-chain network design', clearance: 'GREEN', mandate: 'Draft candidate network topologies.' },
   { at: s(12.9), kind: 'hire', agent: 'Dev', team: 'Network', role: 'Procurement & landed cost', clearance: 'AMBER', mandate: 'Model total landed cost; supplier contact gated by ArmorIQ.' },
   { at: s(13.7), kind: 'hire', agent: 'Kabir', team: 'Network', role: 'Logistics & fulfillment', clearance: 'GREEN', mandate: 'Price and time every candidate route.' },
@@ -100,7 +103,7 @@ const TIMELINE: TimelineEvent[] = [
   { at: s(23.0), kind: 'log', level: 'success', text: 'Ravi shortlisted 8 suppliers across 3 regions.' },
 
   /* --- Resilience wave --- */
-  { at: s(24.5), kind: 'log', level: 'action', text: 'Hiring Resilience cabin — stress-testing the draft network.' },
+  { at: s(24.5), kind: 'log', level: 'action', text: 'Maya → hire_team(): Resilience cabin — Noor flagged 2 high-risk lanes, so stress-testing is now load-bearing.' },
   { at: s(25.1), kind: 'hire', agent: 'Zoya', team: 'Resilience', role: 'Failure / risk mapping', clearance: 'GREEN', mandate: 'Map single points of failure in draft network.' },
   { at: s(25.9), kind: 'hire', agent: 'Ishaan', team: 'Resilience', role: 'Disruption scenario generation', clearance: 'GREEN', mandate: 'Generate disruption scenarios: port closure, tariff spike, supplier default.' },
   { at: s(26.7), kind: 'hire', agent: 'Leena', team: 'Resilience', role: 'Stress testing', clearance: 'GREEN', mandate: 'Run every scenario against every topology.' },
@@ -119,7 +122,8 @@ const TIMELINE: TimelineEvent[] = [
   { at: s(34.6), kind: 'log', level: 'success', text: 'Dev completed landed-cost model across all supplier lanes.' },
 
   /* --- Council wave --- */
-  { at: s(36.0), kind: 'log', level: 'action', text: 'Convening Strategy Council — 5 strategists to weigh trade-offs.' },
+  { at: s(35.7), kind: 'log', level: 'action', text: 'Atlas convening the Strategy Council — cost and resilience evidence now conflict.' },
+  { at: s(36.0), kind: 'log', level: 'action', text: 'Maya → hire_team(): 5 strategists staffed to the council bench.' },
   { at: s(36.6), kind: 'hire', agent: 'Helena', team: 'Council', role: 'Cost strategist', clearance: 'GREEN', mandate: 'Argue the lowest-cost network.' },
   { at: s(37.2), kind: 'hire', agent: 'Vikram', team: 'Council', role: 'Resilience strategist', clearance: 'GREEN', mandate: 'Argue the most shock-proof network.' },
   { at: s(37.8), kind: 'hire', agent: 'Nisha', team: 'Council', role: 'Operations strategist', clearance: 'GREEN', mandate: 'Argue operational simplicity.' },
@@ -146,10 +150,12 @@ const TIMELINE: TimelineEvent[] = [
   { at: s(50.0), kind: 'finish', agent: 'Sofia' },
   { at: s(50.4), kind: 'log', level: 'success', text: 'Council verdict: topology B with dual-sourcing on critical components.' },
 
-  { at: s(51.5), kind: 'log', level: 'action', text: 'Hiring Architecture cabin — final blueprint & validation.' },
+  { at: s(51.5), kind: 'log', level: 'action', text: 'Maya → hire_team(): Architecture cabin — final blueprint, rollout sequencing & independent validation.' },
   { at: s(52.1), kind: 'hire', agent: 'Rohan', team: 'Architecture', role: 'Master supply-chain architect', clearance: 'GREEN', mandate: 'Assemble the master network blueprint.' },
   { at: s(52.9), kind: 'hire', agent: 'Priya', team: 'Architecture', role: 'Implementation planner', clearance: 'AMBER', mandate: 'Sequence rollout; external coordination gated.' },
   { at: s(53.7), kind: 'hire', agent: 'Ethan', team: 'Architecture', role: 'Independent validator', clearance: 'GREEN', mandate: 'Attack the blueprint. Sign off only if it holds.' },
+  { at: s(54.0), kind: 'finish', agent: 'Maya' },
+  { at: s(54.1), kind: 'log', level: 'success', text: 'Maya: task force complete — 21 hired across 5 cabins. Allocation closed.' },
   { at: s(54.3), kind: 'start', agent: 'Rohan', task: 'Assembling master blueprint' },
   { at: s(54.7), kind: 'start', agent: 'Priya', task: 'Sequencing 90-day rollout plan' },
   { at: s(55.1), kind: 'start', agent: 'Ethan', task: 'Independent validation pass' },
@@ -161,8 +167,9 @@ const TIMELINE: TimelineEvent[] = [
   { at: s(62.6), kind: 'complete' },
 ]
 
-/* Atlas is always on duty from t=0 */
+/* Maya and Atlas are always on duty from t=0 — Maya hires, Atlas orchestrates */
 const INITIAL_AGENTS: Record<string, AgentState> = {
+  Maya: { name: 'Maya', phase: 'working', task: 'Allocating the task force', startedAt: 0, finishedAt: null },
   Atlas: { name: 'Atlas', phase: 'working', task: 'Orchestrating the mission', startedAt: 0, finishedAt: null },
 }
 
