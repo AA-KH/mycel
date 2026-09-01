@@ -22,46 +22,64 @@ logger = logging.getLogger(__name__)
 class RobustGroqClient:
     """
     A failover-capable Groq client wrapping a pool of API keys.
-    On rate-limit (429) or quota errors, it rotates to the next key
-    in its pool automatically.
+    On rate-limit (429), it instantly routes to the next healthy key in the pool,
+    tracking cooldowns per key to avoid blocking.
     """
 
     def __init__(self, keys: List[str], team_id: str = "default"):
+        import time
         self.team_id = team_id
         self.keys = [k.strip() for k in keys if k.strip()]
 
         if not self.keys:
             logger.warning(f"[GroqEngine:{team_id}] No API keys configured. Calls will fail.")
-            self.clients: List[AsyncGroq] = []
+            self.clients: List[dict] = []
         else:
-            self.clients = [AsyncGroq(api_key=key) for key in self.keys]
+            self.clients = [
+                {
+                    "client": AsyncGroq(api_key=key),
+                    "cooldown_until": 0.0,
+                    "key_preview": f"{key[:8]}..."
+                }
+                for key in self.keys
+            ]
             logger.info(f"[GroqEngine:{team_id}] Initialized with {len(self.clients)} key(s).")
 
-        self._current_idx = 0
-
-    def _get_client(self) -> AsyncGroq:
+    async def _get_healthy_client(self) -> dict:
+        import time
         if not self.clients:
             raise ValueError(f"No Groq API keys available for team '{self.team_id}'.")
-        return self.clients[self._current_idx]
-
-    def _rotate_client(self) -> bool:
-        if len(self.clients) > 1:
-            self._current_idx = (self._current_idx + 1) % len(self.clients)
-            logger.info(f"[GroqEngine:{self.team_id}] Rotated to key index {self._current_idx}.")
-            return True
-        return False
+            
+        now = time.time()
+        
+        # 1. Find all healthy clients (cooldown expired)
+        healthy = [c for c in self.clients if c["cooldown_until"] <= now]
+        if healthy:
+            # Return the first healthy one (or could be randomized)
+            return healthy[0]
+            
+        # 2. If ALL clients are on cooldown, find the one that expires soonest
+        soonest = min(self.clients, key=lambda c: c["cooldown_until"])
+        wait_time = soonest["cooldown_until"] - now
+        if wait_time > 0:
+            logger.warning(f"[GroqEngine:{self.team_id}] EXTREME LOAD: All {len(self.clients)} keys on cooldown. Sleeping {wait_time:.1f}s.")
+            await asyncio.sleep(wait_time)
+            
+        return soonest
 
     async def chat_completion(self, model: str, messages: list, **kwargs):
         """
-        Execute a chat completion with automatic key-rotation on rate limits.
-        Tries every key in the pool before giving up.
+        Execute a chat completion with instant zero-block key rotation on rate limits.
         """
         import re
+        import time
         attempts = 0
-        max_attempts = 10  # Increased to guarantee output by waiting out limits
+        max_attempts = 100 # Extremely high so we can cycle through 25+ keys multiple times if needed
 
         while attempts < max_attempts:
-            client = self._get_client()
+            client_dict = await self._get_healthy_client()
+            client = client_dict["client"]
+            
             try:
                 response = await client.chat.completions.create(
                     model=model,
@@ -77,36 +95,34 @@ class RobustGroqClient:
                     # Try to parse "Please try again in 8.879s"
                     wait_match = re.search(r"try again in (\d+\.?\d*)s", error_msg)
                     if wait_match:
-                        wait_time = float(wait_match.group(1)) + 1.0  # 1s buffer
+                        wait_time = float(wait_match.group(1)) + 1.0
                     else:
-                        wait_time = 10.0 # Default fallback
+                        wait_time = 10.0
                         
+                    # Mark THIS specific key on cooldown
+                    client_dict["cooldown_until"] = time.time() + wait_time
                     logger.warning(
-                        f"[GroqEngine:{self.team_id}] Rate Limit 429 hit. Waiting {wait_time:.1f}s before retry... (Attempt {attempts+1}/{max_attempts})"
+                        f"[GroqEngine:{self.team_id}] Key {client_dict['key_preview']} Rate Limited (429). Benched for {wait_time:.1f}s. (Attempt {attempts+1})"
                     )
                     
-                    # Try to rotate key if we have multiple, otherwise just sleep on current key
-                    if len(self.clients) > 1:
-                        self._rotate_client()
-                        
-                    await asyncio.sleep(wait_time)
+                    # IMMEDIATELY continue to next iteration which will pick the next healthy key!
+                    attempts += 1
+                    continue
+                    
                 elif status_code in (401, 403):
-                    logger.warning(
-                        f"[GroqEngine:{self.team_id}] Key {self._current_idx} Auth error ({status_code}): {e}"
-                    )
-                    can_rotate = self._rotate_client()
-                    if not can_rotate:
-                        raise e # No other keys to try
+                    logger.warning(f"[GroqEngine:{self.team_id}] Key {client_dict['key_preview']} Auth error ({status_code}): {e}")
+                    # Bench it for a very long time so we don't keep trying dead keys
+                    client_dict["cooldown_until"] = time.time() + 86400 
+                    attempts += 1
+                    continue
                 else:
                     raise
             except Exception as e:
                 logger.error(f"[GroqEngine:{self.team_id}] Unexpected error: {e}")
                 raise
 
-            attempts += 1
-
         raise RuntimeError(
-            f"[GroqEngine:{self.team_id}] All {len(self.clients)} key(s) exhausted after {attempts} attempts."
+            f"[GroqEngine:{self.team_id}] Exhausted {max_attempts} attempts across {len(self.clients)} key(s)."
         )
 
 
@@ -115,13 +131,13 @@ class RobustGroqClient:
 # ─────────────────────────────────────────────────────────────────────────────
 
 _TEAM_KEY_MAP: Dict[str, str] = {
-    "creative":    "groq_creative_keys",
-    "engineering": "groq_engineering_keys",
-    "operations":  "groq_operations_keys",
-    "sales":       "groq_sales_keys",
-    "hr":          "groq_hr_keys",
-    "research":    "groq_research_keys",
-    "marketing":   "groq_marketing_keys",
+    # Executive Team
+    "atlas":       "groq_api_key_atlas",
+    
+    # Architecture Team
+    "ethan":       "groq_api_key_ethan",
+    "priya":       "groq_api_key_priya",
+    "rohan":       "groq_api_key_rohan",
     
     # Intelligence Agents
     "mira":        "groq_api_key_mira",
@@ -134,8 +150,19 @@ _TEAM_KEY_MAP: Dict[str, str] = {
     "dev":         "groq_api_key_dev",
     "kabir":       "groq_api_key_kabir",
     "tara":        "groq_api_key_tara",
+    
+    # Resilience Agents
+    "arjun":       "groq_api_key_arjun",
+    "ishaan":      "groq_api_key_ishaan",
+    "leena":       "groq_api_key_leena",
+    "zoya":        "groq_api_key_zoya",
+    # Council Agents
+    "helena":      "groq_api_key_helena",
+    "vikram":      "groq_api_key_vikram",
+    "nisha":       "groq_api_key_nisha",
+    "omar":        "groq_api_key_omar",
+    "sofia":       "groq_api_key_sofia",
 }
-
 
 def _parse_keys(raw: str) -> List[str]:
     """Split a comma-separated key string into a clean list."""
@@ -155,7 +182,12 @@ class GroqEngineManager:
 
     def __init__(self):
         # Build the default / global client
-        global_keys = [k for k in [settings.groq_api_key_1, settings.groq_api_key_2, settings.groq_api_key] if k]
+        global_keys = []
+        if getattr(settings, "groq_extreme_pool", None):
+            global_keys.extend(_parse_keys(settings.groq_extreme_pool))
+        else:
+            global_keys = [k for k in [settings.groq_api_key_1, settings.groq_api_key_2, settings.groq_api_key] if k]
+            
         self._default = RobustGroqClient(keys=global_keys, team_id="default")
 
         # Build per-team clients, falling back to the global pool if no keys are set

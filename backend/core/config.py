@@ -57,6 +57,15 @@ class Settings(BaseSettings):
     groq_hr_keys: str = ""
     groq_research_keys: str = ""
     groq_marketing_keys: str = ""
+    # Groq Extreme Global Pool
+    groq_extreme_pool: str = ""
+
+    # Council Agent specific keys
+    groq_api_key_helena: str = ""
+    groq_api_key_vikram: str = ""
+    groq_api_key_nisha: str = ""
+    groq_api_key_omar: str = ""
+    groq_api_key_sofia: str = ""
     
     # Intelligence Agent specific keys
     groq_api_key_mira: str = ""
