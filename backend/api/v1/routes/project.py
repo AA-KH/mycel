@@ -85,7 +85,11 @@ async def run_agents_in_background(project_id: str, master_prompt: str):
         )
 
         # 2. Architecture Phase
-        report = await architecture_team.run_architecture_review(master_prompt, hired_agent_ids)
+        # Instantiate a dedicated ArchitectureTeam for this project to maintain isolated logs/session_id
+        from teams.architecture.team import ArchitectureTeam
+        project_architecture_team = ArchitectureTeam(session_id=project_id)
+        
+        report = await project_architecture_team.run_architecture_review(master_prompt, hired_agent_ids)
         
         # Save final report to MongoDB
         await db.projects.update_one(

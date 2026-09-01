@@ -14,11 +14,11 @@ class ArchitectureTeam:
     Phase 2: Atlas synthesizes their outputs into a final executive blueprint.
     """
     
-    def __init__(self):
-        self.ethan = EthanAgent()
-        self.priya = PriyaAgent()
-        self.rohan = RohanAgent()
-        self.atlas = AtlasAgent()
+    def __init__(self, session_id: str = None):
+        self.ethan = EthanAgent(session_id=session_id)
+        self.priya = PriyaAgent(session_id=session_id)
+        self.rohan = RohanAgent(session_id=session_id)
+        self.atlas = AtlasAgent(session_id=session_id)
         self.members = [self.ethan, self.priya, self.rohan, self.atlas]
         
     async def run_architecture_review(self, task_description: str, hired_agent_ids: List[str] = None) -> Dict[str, Any]:

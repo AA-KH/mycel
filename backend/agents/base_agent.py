@@ -49,6 +49,15 @@ class BaseAgent:
                 upsert=True
             )
             
+            await db.agent_logs.insert_one({
+                "session_id": self.session_id,
+                "agent_name": self.name,
+                "role": self.role,
+                "status": state,
+                "summary": summary,
+                "timestamp": now
+            })
+            
             ws_data = session_data.copy()
             ws_data["last_heartbeat_at"] = ws_data["last_heartbeat_at"].isoformat()
             ws_data["event"] = event_type
