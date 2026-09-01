@@ -46,7 +46,7 @@ export default function WelcomePage() {
 
         <div className="boot-in boot-delay-5 mt-8">
           <Link
-            href="/setup"
+            href="/login"
             className="press-pulse inline-block border-2 border-foreground bg-primary px-8 py-4 font-mono text-xs uppercase tracking-widest text-primary-foreground transition-colors hover:bg-accent hover:text-accent-foreground"
           >
             Press Start

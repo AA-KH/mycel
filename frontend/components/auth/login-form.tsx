@@ -4,7 +4,12 @@ import { useState, type FormEvent } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { cn } from '@/lib/utils'
-import { loginUser, registerUser, saveSession } from '@/lib/auth'
+import {
+  fetchSetupStatus,
+  loginUser,
+  registerUser,
+  saveSession,
+} from '@/lib/auth'
 
 type Mode = 'login' | 'register'
 
@@ -12,7 +17,7 @@ function FieldLabel({ children, htmlFor }: { children: React.ReactNode; htmlFor:
   return (
     <label
       htmlFor={htmlFor}
-      className="mb-1.5 block font-mono text-[9px] uppercase tracking-widest"
+      className="mb-2 block font-mono text-[10px] uppercase tracking-widest text-accent"
     >
       {children}
     </label>
@@ -20,7 +25,7 @@ function FieldLabel({ children, htmlFor }: { children: React.ReactNode; htmlFor:
 }
 
 const inputClasses =
-  'w-full border-2 border-foreground bg-background px-3 py-2.5 text-sm placeholder:text-muted-foreground/60 focus:bg-card focus:outline-none focus:ring-2 focus:ring-accent'
+  'w-full border-2 border-foreground bg-background px-4 py-3.5 text-base placeholder:text-muted-foreground/60 focus:bg-card focus:outline-none focus:ring-2 focus:ring-accent lg:py-4'
 
 export function LoginForm() {
   const router = useRouter()
@@ -31,6 +36,7 @@ export function LoginForm() {
   const [showPassword, setShowPassword] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [pending, setPending] = useState(false)
+  const [statusLine, setStatusLine] = useState<string | null>(null)
 
   function switchMode(next: Mode) {
     if (next === mode) return
@@ -53,24 +59,40 @@ export function LoginForm() {
     }
 
     setPending(true)
+    setStatusLine('Verifying credentials')
     try {
       const session =
         mode === 'login'
           ? await loginUser(email.trim(), password)
           : await registerUser(name.trim(), email.trim(), password)
       saveSession(session)
-      router.push('/control')
+
+      // Returning operators already have a network — skip straight to it.
+      setStatusLine('Locating your network')
+      const status =
+        mode === 'login'
+          ? await fetchSetupStatus(session.access_token)
+          : { has_setup: false, setup: null }
+
+      if (status.has_setup) {
+        setStatusLine('Network found — entering mission control')
+        router.push('/control')
+      } else {
+        setStatusLine('No network on record — starting setup')
+        router.push('/setup')
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Authentication failed')
+      setStatusLine(null)
       setPending(false)
     }
   }
 
   return (
-    <div className="w-full max-w-md border-4 border-foreground bg-card pixel-shadow">
+    <div className="w-full border-4 border-foreground bg-card pixel-shadow">
       {/* terminal title bar */}
-      <div className="flex items-center justify-between border-b-4 border-foreground bg-primary px-4 py-2.5">
-        <p className="font-mono text-[9px] uppercase tracking-widest text-primary-foreground">
+      <div className="flex items-center justify-between border-b-4 border-foreground bg-primary px-4 py-3 lg:px-5">
+        <p className="font-mono text-[10px] uppercase tracking-widest text-primary-foreground">
           MYCE<span className="text-secondary">L</span> // AUTH.SYS
         </p>
         <div className="flex items-center gap-1.5" aria-hidden="true">
@@ -81,14 +103,18 @@ export function LoginForm() {
       </div>
 
       {/* mode tabs */}
-      <div className="grid grid-cols-2 border-b-4 border-foreground" role="tablist" aria-label="Authentication mode">
+      <div
+        className="grid grid-cols-2 border-b-4 border-foreground"
+        role="tablist"
+        aria-label="Authentication mode"
+      >
         <button
           type="button"
           role="tab"
           aria-selected={mode === 'login'}
           onClick={() => switchMode('login')}
           className={cn(
-            'border-r-2 border-foreground px-4 py-3 font-mono text-[9px] uppercase tracking-widest transition-colors',
+            'border-r-2 border-foreground px-4 py-4 font-mono text-[10px] uppercase tracking-widest transition-colors',
             mode === 'login'
               ? 'bg-secondary text-secondary-foreground'
               : 'bg-card text-muted-foreground hover:bg-muted',
@@ -102,7 +128,7 @@ export function LoginForm() {
           aria-selected={mode === 'register'}
           onClick={() => switchMode('register')}
           className={cn(
-            'border-l-2 border-foreground px-4 py-3 font-mono text-[9px] uppercase tracking-widest transition-colors',
+            'border-l-2 border-foreground px-4 py-4 font-mono text-[10px] uppercase tracking-widest transition-colors',
             mode === 'register'
               ? 'bg-secondary text-secondary-foreground'
               : 'bg-card text-muted-foreground hover:bg-muted',
@@ -112,10 +138,14 @@ export function LoginForm() {
         </button>
       </div>
 
-      <form onSubmit={handleSubmit} className="step-enter flex flex-col gap-4 p-5 sm:p-6" key={mode}>
-        <p className="font-mono text-[9px] uppercase leading-relaxed tracking-widest text-accent">
+      <form
+        onSubmit={handleSubmit}
+        className="step-enter flex flex-col gap-5 p-6 lg:p-8"
+        key={mode}
+      >
+        <p className="font-mono text-[10px] uppercase leading-relaxed tracking-widest text-accent">
           {mode === 'login'
-            ? '> Verify credentials to enter the control room'
+            ? '> Verify credentials to resume your network'
             : '> Register a new operator with the network'}
           <span className="blink">_</span>
         </p>
@@ -169,13 +199,13 @@ export function LoginForm() {
               onClick={() => setShowPassword((s) => !s)}
               aria-pressed={showPassword}
               aria-label={showPassword ? 'Hide passcode' : 'Show passcode'}
-              className="shrink-0 border-2 border-foreground bg-muted px-3 font-mono text-[8px] uppercase tracking-widest transition-colors hover:bg-secondary"
+              className="shrink-0 border-2 border-foreground bg-muted px-4 font-mono text-[9px] uppercase tracking-widest transition-colors hover:bg-secondary"
             >
               {showPassword ? 'Hide' : 'Show'}
             </button>
           </div>
           {mode === 'register' ? (
-            <p className="mt-1.5 text-[12px] leading-snug text-muted-foreground">
+            <p className="mt-2 text-sm leading-snug text-muted-foreground">
               Minimum 8 characters.
             </p>
           ) : null}
@@ -184,9 +214,20 @@ export function LoginForm() {
         {error ? (
           <p
             role="alert"
-            className="border-2 border-destructive bg-accent/10 px-3 py-2.5 font-mono text-[9px] uppercase leading-relaxed tracking-wider text-destructive"
+            className="border-2 border-destructive bg-accent/10 px-4 py-3 font-mono text-[10px] uppercase leading-relaxed tracking-wider text-destructive"
           >
             [!] {error}
+          </p>
+        ) : null}
+
+        {pending && statusLine ? (
+          <p
+            aria-live="polite"
+            className="border-2 border-foreground bg-primary px-4 py-3 font-mono text-[10px] uppercase leading-relaxed tracking-wider text-secondary"
+          >
+            {'> '}
+            {statusLine}
+            <span className="blink">_</span>
           </p>
         ) : null}
 
@@ -194,34 +235,34 @@ export function LoginForm() {
           type="submit"
           disabled={pending}
           className={cn(
-            'mt-1 border-2 border-foreground bg-primary px-5 py-3.5 font-mono text-[10px] uppercase tracking-widest text-primary-foreground pixel-shadow-sm transition-colors',
-            'hover:bg-accent hover:text-accent-foreground',
+            'mt-1 border-2 border-foreground bg-accent px-6 py-4 font-mono text-[11px] uppercase tracking-widest text-accent-foreground pixel-shadow-sm transition-colors lg:py-5',
+            'hover:bg-primary hover:text-primary-foreground',
             'active:translate-x-[3px] active:translate-y-[3px] active:shadow-none',
             'disabled:cursor-not-allowed disabled:opacity-40',
           )}
         >
           {pending ? (
             <>
-              Authenticating<span className="blink">_</span>
+              Working<span className="blink">_</span>
             </>
           ) : mode === 'login' ? (
-            'Enter Control Room'
+            'Resume Network'
           ) : (
             'Create Operator'
           )}
         </button>
 
-        <div className="flex flex-wrap items-center justify-between gap-2 border-t-2 border-dashed border-foreground/30 pt-4">
+        <div className="flex flex-wrap items-center justify-between gap-3 border-t-2 border-dashed border-foreground/30 pt-5">
           <Link
             href="/"
-            className="whitespace-nowrap font-mono text-[9px] uppercase tracking-widest text-muted-foreground transition-colors hover:text-accent"
+            className="whitespace-nowrap font-mono text-[10px] uppercase tracking-widest text-muted-foreground transition-colors hover:text-accent"
           >
             {'< Back to boot'}
           </Link>
           <button
             type="button"
             onClick={() => switchMode(mode === 'login' ? 'register' : 'login')}
-            className="whitespace-nowrap font-mono text-[9px] uppercase tracking-widest text-accent transition-colors hover:text-foreground"
+            className="whitespace-nowrap font-mono text-[10px] uppercase tracking-widest text-accent transition-colors hover:text-foreground"
           >
             {mode === 'login' ? 'No account? Register >' : 'Have access? Sign in >'}
           </button>
