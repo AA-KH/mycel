@@ -185,9 +185,9 @@ export const FURNITURE: FurnitureDef[] = [
   { img: 'PC_FRONT_ON', col: 20, row: 16, animated: true },
   { img: 'CUSHIONED_CHAIR_BACK', col: 20, row: 18 },
   // Maya's hiring desk — shares the Executive Cabin with Atlas
-  { img: 'DESK_FRONT', col: 21, row: 20 },
-  { img: 'PC_FRONT_ON', col: 22, row: 20, animated: true },
-  { img: 'CUSHIONED_CHAIR_BACK', col: 22, row: 22 },
+  { img: 'DESK_FRONT', col: 21, row: 19 },
+  { img: 'PC_FRONT_ON', col: 22, row: 19, animated: true },
+  { img: 'CUSHIONED_CHAIR_BACK', col: 22, row: 21 },
   { img: 'SOFA_FRONT', col: 15, row: 17 },
   { img: 'COFFEE_TABLE', col: 15, row: 19 },
   { img: 'COFFEE', col: 16, row: 20 },
@@ -287,7 +287,7 @@ export const AGENT_SEATS: AgentSeatDef[] = [
   { name: 'Sofia',   role: 'Innovation Scout',        room: 'strategy',     charIdx: 4, seatCol: 8,  seatRow: 21, seatDir: Direction.UP },
   // Executive Cabin — Atlas orchestrates, Maya hires
   { name: 'Atlas',   role: 'Executive Orchestrator',  room: 'atlas',        charIdx: 5, seatCol: 20, seatRow: 18, seatDir: Direction.UP, isExecutive: true },
-  { name: 'Maya',    role: 'Chief Resource Allocator', room: 'atlas',       charIdx: 4, seatCol: 22, seatRow: 22, seatDir: Direction.UP, isExecutive: true },
+  { name: 'Maya',    role: 'Chief Resource Allocator', room: 'atlas',       charIdx: 4, seatCol: 22, seatRow: 21, seatDir: Direction.UP, isExecutive: true },
   // Architecture
   { name: 'Rohan',   role: 'System Architect',        room: 'architecture', charIdx: 0, seatCol: 30, seatRow: 17, seatDir: Direction.UP },
   { name: 'Priya',   role: 'Platform Engineer',       room: 'architecture', charIdx: 1, seatCol: 35, seatRow: 17, seatDir: Direction.UP },
@@ -435,7 +435,7 @@ export function computeBlockedTiles(): Set<string> {
 
 export const BLOCKED_TILES = computeBlockedTiles();
 
-// ═══════════════════════════════════════════════════════════════════
+// ═════════════════════════════════════════════════════════════���═════
 // SEAT TILES
 // ═══════════════════════════════════════════════════════════════════
 
