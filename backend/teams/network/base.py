@@ -33,32 +33,6 @@ NETWORK_TOOLS = [
                 "required": ["city1", "city2"]
             }
         }
-    },
-    {
-        "type": "function",
-        "function": {
-            "name": "calculate_eoq",
-            "description": "Calculates the Economic Order Quantity (EOQ). Used to minimize total holding and ordering costs.",
-            "parameters": {
-                "type": "object",
-                "properties": {
-                    "annual_demand": {
-                        "type": "number",
-                        "description": "D: Annual demand quantity"
-                    },
-                    "ordering_cost": {
-                        "type": "number",
-                        "description": "S: Cost per order"
-                    },
-                    "holding_cost": {
-                        "type": "number",
-                        "description": "H: Holding cost per unit per year"
-                    }
-                },
-                "required": ["annual_demand", "ordering_cost", "holding_cost"]
-            }
-        }
-    }
 ]
 
 # --- COMMON REASONING GUIDELINES ---
