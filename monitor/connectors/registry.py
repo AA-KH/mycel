@@ -15,8 +15,11 @@ from .base import SourceConnector
 from .changedetection import ChangeDetectionConnector
 from .gdacs import GDACSConnector
 from .gdelt import GDELTConnector
+from .gta import GTAConnector
 from .openmeteo import OpenMeteoConnector
 from .usgs import USGSConnector
+from .wits import WITSConnector
+from .wto import WTOConnector
 
 
 class ConnectorRegistry:
@@ -34,6 +37,9 @@ class ConnectorRegistry:
             "usgs": USGSConnector,
             "openmeteo": OpenMeteoConnector,
             "changedetection": ChangeDetectionConnector,
+            "wto": WTOConnector,
+            "global_trade_alert": GTAConnector,
+            "wits": WITSConnector,
         }
 
     def activate(self, source_names: list[str]) -> None:
@@ -52,11 +58,21 @@ class ConnectorRegistry:
                 logger.info(f"Source {name} is disabled in configuration")
                 continue
 
-            # Special check for changedetection
+            # Special check for sources requiring configuration
             if name == "changedetection":
                 connector = ChangeDetectionConnector(self.config)
                 if not connector.is_configured:
                     logger.info("changedetection.io not configured — skipping")
+                    continue
+            elif name == "wto":
+                connector = WTOConnector(self.config)
+                if not connector.is_configured:
+                    logger.info("WTO API key not configured — skipping")
+                    continue
+            elif name == "global_trade_alert":
+                connector = GTAConnector(self.config)
+                if not connector.is_configured:
+                    logger.info("Global Trade Alert not configured — skipping")
                     continue
 
             connector = self._available[name](self.config)

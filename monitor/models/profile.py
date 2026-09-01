@@ -92,6 +92,7 @@ class WatchTarget(BaseModel):
     # Pre-compiled queries for source connectors
     queries: list[str] = Field(default_factory=list)
     query_terms: list[str] = Field(default_factory=list)  # Terms for query composition
+    hs_codes: list[str] = Field(default_factory=list)  # HS codes for trade monitoring
 
     # Geographic context
     coordinates: Optional[Coordinates] = None
@@ -135,6 +136,7 @@ class QueryGroup(BaseModel):
     signal_types: list[SignalType] = Field(default_factory=list)
     entity_ids: list[str] = Field(default_factory=list)
     countries: list[str] = Field(default_factory=list)
+    hs_codes: list[str] = Field(default_factory=list)  # HS codes for trade-source filtering
     frequency: FrequencyPolicy = Field(default_factory=FrequencyPolicy)
     query_hash: Optional[str] = None  # For deduplication of equivalent queries
 
@@ -161,6 +163,9 @@ class MonitoringProfile(BaseModel):
     # Commodity watchlist
     watched_commodities: list[str] = Field(default_factory=list)
     commodity_synonyms: dict[str, list[str]] = Field(default_factory=dict)
+
+    # HS code watchlist (from material nodes) for trade-source filtering
+    watched_hs_codes: list[str] = Field(default_factory=list)
 
     # The watch plan — what the scheduler executes
     watch_targets: list[WatchTarget] = Field(default_factory=list)

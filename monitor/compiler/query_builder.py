@@ -106,7 +106,15 @@ def build_query_groups(
 
     Combines related watch targets into efficient batched queries.
     Hash-deduplicates equivalent queries.
+
+    Trade sources (wto, global_trade_alert, wits) use structured
+    parameters (countries + HS codes). Text-based sources (gdelt) use
+    keyword queries.
     """
+    # Route trade sources to structured builder
+    if source in ("wto", "global_trade_alert", "wits"):
+        return _build_trade_query_groups(watch_targets, source)
+
     # Group watch targets by signal type
     by_signal: dict[SignalType, list] = {}
     for target in watch_targets:
@@ -162,3 +170,73 @@ def build_query_groups(
         groups.append(group)
 
     return groups
+
+
+def _build_trade_query_groups(
+    watch_targets: list,
+    source: str,
+) -> list[QueryGroup]:
+    """Build query groups for trade sources using structured parameters.
+
+    Trade sources (WTO, GTA, WITS) use countries + HS codes, not text queries.
+    Groups targets by country set to minimize API calls.
+    """
+    # Collect all countries and HS codes from targets that use this source
+    all_countries: set[str] = set()
+    all_hs_codes: set[str] = set()
+    all_entity_ids: list[str] = []
+    all_signal_types: set[SignalType] = set()
+    targets_for_source = []
+
+    for target in watch_targets:
+        if source not in target.sources:
+            continue
+        targets_for_source.append(target)
+        all_countries.update(target.countries)
+        all_hs_codes.update(getattr(target, "hs_codes", []))
+        if target.entity_id:
+            all_entity_ids.append(target.entity_id)
+        all_signal_types.update(target.signal_types)
+
+    if not targets_for_source or not all_countries:
+        return []
+
+    # Filter to trade-relevant signal types
+    trade_signals = [
+        s for s in all_signal_types
+        if s in (
+            SignalType.TRADE_POLICY,
+            SignalType.TRADE_RESTRICTION,
+            SignalType.NON_TARIFF_MEASURE,
+            SignalType.REGULATORY,
+            SignalType.GEOPOLITICAL,
+        )
+    ]
+    if not trade_signals:
+        return []
+
+    # Build a single consolidated query group per source
+    # Trade sources handle their own internal iteration over countries/HS codes
+    countries = sorted(all_countries)
+    hs_codes = sorted(all_hs_codes)
+
+    # Query descriptor (not a text query — just metadata for logging)
+    query_desc = f"trade:{source}|countries={','.join(countries[:5])}|hs={','.join(hs_codes[:5])}"
+    query_hash = hashlib.sha256(query_desc.encode()).hexdigest()[:16]
+
+    min_normal = min(t.frequency.normal_seconds for t in targets_for_source)
+
+    group = QueryGroup(
+        group_id=f"{source}_trade_{query_hash[:8]}",
+        source=source,
+        query=query_desc,
+        signal_types=trade_signals,
+        entity_ids=all_entity_ids,
+        countries=countries,
+        hs_codes=hs_codes,
+        frequency=FrequencyPolicy(normal_seconds=min_normal),
+        query_hash=query_hash,
+    )
+
+    return [group]
+

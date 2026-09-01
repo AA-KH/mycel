@@ -132,6 +132,12 @@ class CorrelationEngine:
                     ("natural_disaster", "road_disruption"),
                     ("labor_action", "supplier_disruption"),
                     ("labor_action", "port_disruption"),
+                    # Trade-related cross-source correlation
+                    ("trade_policy", "trade_restriction"),
+                    ("trade_policy", "geopolitical"),
+                    ("trade_restriction", "supplier_disruption"),
+                    ("trade_restriction", "geopolitical"),
+                    ("non_tariff_measure", "regulatory"),
                 }
                 pair = tuple(sorted([event_signal, situation.primary_signal_type or ""]))
                 if pair in related_pairs:
@@ -143,6 +149,14 @@ class CorrelationEngine:
             if event_commodities & situation_commodities:
                 if event.signal_type.value in ("trade_policy", "commodity_price"):
                     return situation
+
+            # Criterion 4: Multi-dimensional commodity + country correlation
+            # If events share BOTH a commodity AND a country, they are
+            # candidates for the same situation regardless of signal type.
+            # This enables: GTA (China graphite) + GDELT (China graphite)
+            #   + WTO (China graphite) → one situation.
+            if event_commodities & situation_commodities and event_countries & situation_countries:
+                return situation
 
         return None
 
