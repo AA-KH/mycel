@@ -1,8 +1,10 @@
 import json
 import logging
 import re
+from datetime import datetime, timezone
 from agents.base_agent import BaseAgent
-from core.groq_engine import groq_engine
+from core.mongodb import mongodb_connection
+from core.groq_engine import engine_manager
 
 # Import the actual python functions for the base tools
 from teams.intelligence.shared_tools import web_search, web_scrape
@@ -71,7 +73,7 @@ class IntelligenceBaseAgent(BaseAgent):
         else:
             return f"Error: Tool {function_name} not found in base agent."
 
-    async def run_task(self, task_description: str, model: str = "qwen/qwen3.6-27b") -> str:
+    async def run_task(self, task_description: str, model: str = "openai/gpt-oss-120b") -> str:
         await self.report_status("working", f"🧠 {self.name} analyzing task and formulating research plan...")
         
         messages = [
@@ -79,16 +81,17 @@ class IntelligenceBaseAgent(BaseAgent):
             {"role": "user", "content": task_description}
         ]
         
-        MAX_ITERATIONS = 5
+        MAX_ITERATIONS = 15
         iteration = 0
         
         while iteration < MAX_ITERATIONS:
             iteration += 1
             
             try:
-                response = await groq_engine.chat_completion(
+                response = await engine_manager.chat_completion(
                     model=model,
                     messages=messages,
+                    team_id=self.name.lower(),
                     tools=self.agent_tools,
                     tool_choice="auto",
                     temperature=0.3
@@ -125,6 +128,30 @@ class IntelligenceBaseAgent(BaseAgent):
                 if result.endswith("```"):
                     result = result[:-3].strip()
                     
+                # Save the complete reasoning trail (messages) and final output to MongoDB for Chatbot explainability
+                try:
+                    # Attempt to parse as JSON if it's JSON, otherwise store as string
+                    try:
+                        parsed_output = json.loads(result)
+                    except json.JSONDecodeError:
+                        parsed_output = result
+                        
+                    report_doc = {
+                        "agent_name": self.name,
+                        "role": self.role,
+                        "task_description": task_description,
+                        "reasoning_trail": messages,
+                        "final_output": parsed_output,
+                        "timestamp": datetime.now(timezone.utc)
+                    }
+                    if mongodb_connection.client is not None:
+                        await mongodb_connection.db["intelligence_reports"].insert_one(report_doc)
+                        logger.info(f"Saved {self.name}'s reasoning trail to DB.")
+                    else:
+                        logger.warning("MongoDB is not connected. Reasoning trail was not saved.")
+                except Exception as db_err:
+                    logger.error(f"Failed to save {self.name}'s reasoning trail to DB: {db_err}")
+
                 await self.report_status("complete", f"✅ {self.name} completed research and generated output.")
                 return result
 

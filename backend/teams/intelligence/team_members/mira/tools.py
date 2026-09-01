@@ -13,6 +13,8 @@ async def fetch_trend_data(keyword: str) -> str:
     
     def _fetch():
         try:
+            import warnings
+            warnings.simplefilter(action='ignore', category=FutureWarning)
             from pytrends.request import TrendReq
             
             # Using timezone offset 0 (UTC)

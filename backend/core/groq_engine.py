@@ -106,6 +106,12 @@ _TEAM_KEY_MAP: Dict[str, str] = {
     "hr":          "groq_hr_keys",
     "research":    "groq_research_keys",
     "marketing":   "groq_marketing_keys",
+    
+    # Intelligence Agents
+    "mira":        "groq_api_key_mira",
+    "ravi":        "groq_api_key_ravi",
+    "anika":       "groq_api_key_anika",
+    "noor":        "groq_api_key_noor",
 }
 
 

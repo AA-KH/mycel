@@ -57,6 +57,12 @@ class Settings(BaseSettings):
     groq_hr_keys: str = ""
     groq_research_keys: str = ""
     groq_marketing_keys: str = ""
+    
+    # Intelligence Agent specific keys
+    groq_api_key_mira: str = ""
+    groq_api_key_ravi: str = ""
+    groq_api_key_anika: str = ""
+    groq_api_key_noor: str = ""
 
     # Real Estate Domain Demo
     re_voice_mode: str = "browser"              # "browser" | "voicelink" | "groq_whisper"

@@ -98,9 +98,6 @@ app.include_router(auth_router, prefix="/api/auth", tags=["Auth"])
 from api.v1.routes.realtime import router as realtime_router
 app.include_router(realtime_router, prefix="/api/realtime", tags=["Realtime"])
 
-# Mount SlideBot-AI Sub-Application
-from api.slidebot_app import slidebot_app
-app.mount("/slidebot", slidebot_app)
 
 # Mount Company Builder Demo Domain
 from domains.company_builder.router import router as company_builder_router
