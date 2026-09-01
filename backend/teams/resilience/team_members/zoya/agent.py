@@ -1,8 +1,8 @@
-from teams.network.base import NetworkBaseAgent
-from teams.network.resilience.zoya.prompt import ZOYA_SYSTEM_PROMPT
-from teams.network.resilience.zoya.tools import ZOYA_SPECIFIC_TOOLS, search_global_news, check_supplier_financial_health, analyze_geopolitical_risk
+from teams.resilience.base import ResilienceBaseAgent
+from teams.resilience.team_members.zoya.prompt import ZOYA_SYSTEM_PROMPT
+from teams.resilience.team_members.zoya.tools import ZOYA_SPECIFIC_TOOLS, search_global_news, check_supplier_financial_health, analyze_geopolitical_risk
 
-class ZoyaAgent(NetworkBaseAgent):
+class ZoyaAgent(ResilienceBaseAgent):
     def __init__(self, task_id: str = "default"):
         # Zoya doesn't need heavy math reasoning, but she needs the ReAct base class.
         super().__init__(
