@@ -7,10 +7,10 @@ leena = Employee(
     identity=EmployeeIdentity(
         first_name="Leena",
         last_name="",
-        title="Stress testing",
+        title="Supply Chain Stress Tester",
         specialization="scm_resilience",
         seniority="Senior",
-        background="Expert in Stress testing."
+        background="Expert in structural stress testing, identifying capacity bottlenecks, and mathematical supply chain breaking points."
     ),
     reasoning_profile_id="standard"
 )
