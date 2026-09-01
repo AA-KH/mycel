@@ -25,6 +25,8 @@ class SignalType(str, Enum):
     INFRASTRUCTURE_DAMAGE = "infrastructure_damage"
     LABOR_ACTION = "labor_action"
     FINANCIAL_DISTRESS = "financial_distress"
+    TRADE_RESTRICTION = "trade_restriction"        # Export/import restrictions, bans, quotas
+    NON_TARIFF_MEASURE = "non_tariff_measure"      # NTMs: SPS, TBT, regulatory barriers
 
 
 # Which signal types each source can produce.
@@ -52,6 +54,21 @@ SOURCE_SIGNAL_CAPABILITIES: dict[str, list[SignalType]] = {
     ],
     "changedetection": [
         SignalType.SUPPLIER_DISRUPTION,
+    ],
+    "wto": [
+        SignalType.TRADE_POLICY,
+        SignalType.TRADE_RESTRICTION,
+    ],
+    "global_trade_alert": [
+        SignalType.TRADE_POLICY,
+        SignalType.TRADE_RESTRICTION,
+        SignalType.GEOPOLITICAL,
+        SignalType.REGULATORY,
+    ],
+    "wits": [
+        SignalType.TRADE_POLICY,
+        SignalType.NON_TARIFF_MEASURE,
+        SignalType.REGULATORY,
     ],
 }
 

@@ -81,6 +81,7 @@ def compile_profile(architecture: NetworkArchitecture) -> MonitoringProfile:
     # ── 7. Collect watched data ──
     watched_countries: set[str] = set()
     watched_commodities: set[str] = set()
+    watched_hs_codes: set[str] = set()
     watched_coords: list[dict] = []
     total_routes = 0
 
@@ -88,6 +89,7 @@ def compile_profile(architecture: NetworkArchitecture) -> MonitoringProfile:
         if node.country:
             watched_countries.add(node.country)
         watched_commodities.update(node.commodities)
+        watched_hs_codes.update(node.hs_codes)
         if node.coordinates:
             watched_coords.append({
                 "node_id": node.id,
@@ -121,6 +123,7 @@ def compile_profile(architecture: NetworkArchitecture) -> MonitoringProfile:
         watched_coordinates=watched_coords,
         watched_countries=sorted(watched_countries),
         watched_commodities=sorted(watched_commodities),
+        watched_hs_codes=sorted(watched_hs_codes),
         commodity_synonyms=commodity_synonyms,
         watch_targets=watch_targets,
         query_groups=query_groups,
@@ -182,6 +185,8 @@ def _determine_node_signals(
             countries = {n.country for n in architecture.nodes if n.country}
             if node.country and len(countries) > 1:
                 signals.append(SignalType.TRADE_POLICY)
+                signals.append(SignalType.TRADE_RESTRICTION)
+                signals.append(SignalType.NON_TARIFF_MEASURE)
                 signals.append(SignalType.GEOPOLITICAL)
 
         elif node.type == NodeType.PORT:
@@ -205,6 +210,7 @@ def _determine_node_signals(
             signals.extend([
                 SignalType.COMMODITY_PRICE,
                 SignalType.TRADE_POLICY,
+                SignalType.NON_TARIFF_MEASURE,
             ])
 
         node_signals[node.id] = signals
@@ -228,8 +234,13 @@ def _determine_active_sources(
         if any(sig in needed_signals for sig in capabilities):
             active.add(source)
 
-    # changedetection is Tier 2 — only if explicitly configured
+    # Tier 2 sources — require explicit configuration
+    # These are discarded here; they re-appear if the profile compiler
+    # selected them AND the registry confirms they are configured.
     active.discard("changedetection")
+    active.discard("wto")            # Requires API key
+    active.discard("global_trade_alert")  # Requires commercial license
+    # WITS is public — no discard needed
 
     return sorted(active)
 
@@ -273,6 +284,20 @@ def _build_watch_targets(
         # Build query terms for this entity
         query_terms = [node.name] + node.aliases[:3]
 
+        # Collect HS codes from this node and connected material nodes
+        node_hs_codes: list[str] = list(node.hs_codes)
+        for edge in architecture.edges:
+            connected_id = None
+            if edge.source == node.id:
+                connected_id = edge.target
+            elif edge.target == node.id:
+                connected_id = edge.source
+            if connected_id:
+                connected = architecture.get_node(connected_id)
+                if connected and connected.type == NodeType.MATERIAL:
+                    node_hs_codes.extend(connected.hs_codes)
+        node_hs_codes = sorted(set(node_hs_codes))
+
         target = WatchTarget(
             target_id=f"watch_{node.id}",
             target_type="entity",
@@ -283,6 +308,7 @@ def _build_watch_targets(
             sources=node_sources,
             queries=[],  # Filled by query groups
             query_terms=query_terms,
+            hs_codes=node_hs_codes,
             coordinates=node.coordinates,
             spatial_logic=spatial,
             countries=[node.country] if node.country else [],

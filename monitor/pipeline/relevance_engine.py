@@ -257,6 +257,37 @@ class RelevanceEngine:
         if wind and wind > 120:
             return "HIGH"
 
+        # Trade policy — export bans/restrictions
+        intervention_type = meta.get("intervention_type", "")
+        if intervention_type in ("export_ban", "import_ban", "embargo", "sanction"):
+            return "HIGH"
+        if intervention_type in ("export_restriction", "import_restriction", "quota"):
+            return "HIGH"
+
+        # Trade policy — tariff changes
+        old_val = meta.get("old_value")
+        new_val = meta.get("new_value")
+        if old_val is not None and new_val is not None:
+            try:
+                change = float(new_val) - float(old_val)
+                if change > 10:
+                    return "HIGH"
+                elif change > 0:
+                    return "MEDIUM"
+                elif change < 0:
+                    return "LOW"  # Tariff decrease
+            except (ValueError, TypeError):
+                pass
+
+        # NTM changes
+        ntm_type = meta.get("ntm_type")
+        if ntm_type:
+            return "MEDIUM"
+
+        # Trade policy — subsidies and state aid
+        if intervention_type in ("subsidy", "state_aid", "public_procurement"):
+            return "LOW"
+
         return "MEDIUM"
 
     def _needs_semantic_analysis(
@@ -279,7 +310,7 @@ class RelevanceEngine:
         - No entity match at all (already rejected)
         """
         # Structured sources don't need semantic analysis
-        if event.source in ("usgs", "gdacs", "openmeteo"):
+        if event.source in ("usgs", "gdacs", "openmeteo", "wto", "global_trade_alert", "wits"):
             return False
 
         # Fuzzy entity matches need confirmation
