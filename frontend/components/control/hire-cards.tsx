@@ -20,7 +20,7 @@ export function HireCardsTab({ hires }: { hires: HireEvent[] }) {
       <div className="pixel-scroll min-h-0 flex-1 overflow-y-auto bg-muted/60 p-3">
         {hires.length === 0 ? (
           <p className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground">
-            {'> No hires yet. Atlas is assessing the mission…'}
+            {'> No hires yet. Maya is assessing the mission…'}
             <span className="blink">_</span>
           </p>
         ) : (

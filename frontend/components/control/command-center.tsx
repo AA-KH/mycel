@@ -45,7 +45,7 @@ export function CommandCenter({ mission }: { mission: MissionState }) {
             Command Center
           </h2>
           <p className="truncate font-mono text-[7px] uppercase tracking-widest text-secondary-foreground/70">
-            Atlas runs the floor
+            Maya hires {'\u00b7'} Atlas runs the floor
           </p>
         </div>
         <a
