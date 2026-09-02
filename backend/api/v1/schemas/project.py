@@ -1,27 +1,36 @@
 from pydantic import BaseModel, Field
 from typing import List, Optional
 
-class ProductDetails(BaseModel):
-    name: str = Field(..., description="E.g., Graphite pencils")
-    description: Optional[str] = Field(None, description="What is it, what is it made of, who is it for?")
-    categories: Optional[List[str]] = Field(default_factory=list)
-
-class NetworkRegions(BaseModel):
-    supply: Optional[str] = Field(None, description="Where can you source from? e.g. India Only, Specific Countries")
-    operations: Optional[str] = Field(None, description="Manufacturing / warehouse locations")
-    customers: Optional[str] = Field(None, description="Where do you sell / distribute?")
-
-class ExistingKnowledge(BaseModel):
-    suppliers: Optional[List[str]] = Field(default_factory=list)
-    contracts: Optional[List[str]] = Field(default_factory=list)
-    warehouses: Optional[List[str]] = Field(default_factory=list)
-    manufacturing: Optional[List[str]] = Field(default_factory=list)
-    logistics_agreements: Optional[List[str]] = Field(default_factory=list)
-    hard_constraints: Optional[List[str]] = Field(default_factory=list)
+class ConstraintEntry(BaseModel):
+    category: str
+    text: str
 
 class ProjectPayload(BaseModel):
-    business_type: str = Field(..., description="E.g., Retail / Ecommerce, Wholesaler / Distributor")
-    product: ProductDetails
-    regions: NetworkRegions
-    priorities: List[str] = Field(default_factory=list, description="Ordered array of priorities like Lowest Cost, Maximum Resilience")
-    existing_knowledge: Optional[ExistingKnowledge] = None
+    businessType: str = Field("", alias="business_type")
+    businessDescription: str = Field("", alias="business_description")
+    productName: str = Field("", alias="product_name")
+    productDescription: str = Field("", alias="product_description")
+    categories: str = ""
+    brands: str = ""
+    skuRange: str = Field("", alias="sku_range")
+    customerTypes: str = Field("", alias="customer_types")
+    supplySource: str = Field("", alias="supply_source")
+    supplyCountries: str = Field("", alias="supply_countries")
+    operations: str = ""
+    operationsDetails: str = Field("", alias="operations_details")
+    customerScope: str = Field("", alias="customer_scope")
+    customerAreas: str = Field("", alias="customer_areas")
+    volume: str = ""
+    demandPattern: str = Field("", alias="demand_pattern")
+    peakSurge: str = Field("", alias="peak_surge")
+    timeline: str = ""
+    targetDate: str = Field("", alias="target_date")
+    deadlineType: str = Field("", alias="deadline_type")
+    budgetTolerance: str = Field("", alias="budget_tolerance")
+    freightModes: List[str] = Field(default_factory=list, alias="freight_modes")
+    priorities: List[str] = Field(default_factory=list)
+    constraints: List[ConstraintEntry] = Field(default_factory=list)
+    files: List[str] = Field(default_factory=list)
+
+    class Config:
+        populate_by_name = True

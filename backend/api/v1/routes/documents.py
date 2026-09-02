@@ -1,9 +1,9 @@
-from fastapi import APIRouter, File, UploadFile, HTTPException, status
+from fastapi import APIRouter, File, UploadFile, HTTPException, status, Form
 from pydantic import BaseModel
 import logging
+import cloudinary.uploader
 
-from core.document_parser import DocumentParser
-from core.vector_store import global_vector_store
+from core.rabbitmq import rabbitmq_producer
 from organization.schemas import APIResponse
 
 logger = logging.getLogger(__name__)
@@ -15,32 +15,44 @@ class DocumentUploadResponse(BaseModel):
     message: str
 
 @router.post("/documents/upload", response_model=APIResponse, status_code=status.HTTP_201_CREATED)
-async def upload_document(file: UploadFile = File(...)):
+async def upload_document(
+    file: UploadFile = File(...),
+    project_id: str = Form("draft")
+):
     """
-    Upload a document (PDF, CSV, Excel, TXT), parse it into chunks, and store in FAISS Vector DB for agent retrieval.
+    Upload a document (PDF, CSV, Excel, TXT), store it in Cloudinary, and enqueue an ingestion job via RabbitMQ.
     """
     try:
         file_bytes = await file.read()
         
-        # Parse the document into chunks
-        chunks = DocumentParser.parse_document(
-            file_bytes=file_bytes,
-            filename=file.filename,
-            content_type=file.content_type
+        # Upload to Cloudinary
+        upload_result = cloudinary.uploader.upload(
+            file_bytes,
+            resource_type="raw",
+            public_id=f"mycel/{project_id}/{file.filename}",
+            type="private"
         )
         
-        if not chunks:
-            raise HTTPException(status_code=400, detail="Could not extract any text from the document.")
+        cloudinary_url = upload_result.get("secure_url")
+        if not cloudinary_url:
+            raise Exception("Failed to get secure_url from Cloudinary")
             
-        # Add chunks to the Vector Store (FAISS)
-        global_vector_store.add_documents(chunks)
+        # Queue ingestion task
+        event_payload = {
+            "project_id": project_id,
+            "filename": file.filename,
+            "content_type": file.content_type,
+            "cloudinary_url": cloudinary_url
+        }
+        
+        await rabbitmq_producer.publish("document.ingest", event_payload)
         
         return APIResponse(
             success=True,
             data={
                 "filename": file.filename,
-                "chunks_processed": len(chunks),
-                "message": f"Successfully processed and embedded {len(chunks)} chunks into vector memory."
+                "cloudinary_url": cloudinary_url,
+                "message": "File uploaded and ingestion job queued."
             }
         )
         

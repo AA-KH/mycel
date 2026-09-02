@@ -4,11 +4,12 @@ import { useEffect, useRef } from 'react'
 import { cn } from '@/lib/utils'
 import { formatElapsed, type AtlasLog } from '@/lib/mission-sim'
 
-const LEVEL_STYLES: Record<AtlasLog['level'], { prefix: string; className: string }> = {
+const LEVEL_STYLES: Record<string, { prefix: string; className: string }> = {
   info: { prefix: '>', className: 'text-foreground' },
   action: { prefix: '>>', className: 'text-accent' },
   success: { prefix: 'OK', className: 'text-[#3d7a4a]' },
   warn: { prefix: '!!', className: 'text-destructive' },
+  error: { prefix: 'ERR', className: 'text-destructive font-bold' },
   armor: { prefix: 'AIQ', className: 'text-[#8a5a2b]' },
 }
 
@@ -45,7 +46,7 @@ export function AtlasLogTab({ logs, complete }: { logs: AtlasLog[]; complete: bo
         ) : (
           <ol className="flex flex-col gap-2">
             {logs.map((log) => {
-              const style = LEVEL_STYLES[log.level]
+              const style = LEVEL_STYLES[log.level] || LEVEL_STYLES.info
               return (
                 <li key={log.id} className="step-enter flex items-baseline gap-2 font-mono text-[10px] leading-relaxed">
                   <span className="shrink-0 text-muted-foreground">[{formatElapsed(log.at)}]</span>

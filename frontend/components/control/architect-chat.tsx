@@ -1,9 +1,10 @@
 'use client'
 
 import { useEffect, useRef, useState } from 'react'
-import { useChat } from '@ai-sdk/react'
-import { DefaultChatTransport } from 'ai'
 import { cn } from '@/lib/utils'
+import { getToken } from '@/lib/auth'
+
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'
 
 const SUGGESTIONS = [
   'Why dual-sourcing instead of the cheapest supplier?',
@@ -11,26 +12,61 @@ const SUGGESTIONS = [
   'Explain the 30-day safety stock decision',
 ]
 
-export function ArchitectChat() {
-  const { messages, sendMessage, status, error } = useChat({
-    transport: new DefaultChatTransport({ api: '/api/architect' }),
-  })
+type Message = {
+  id: string
+  role: 'user' | 'assistant'
+  content: string
+}
+
+export function ArchitectChat({ projectId }: { projectId: string | null }) {
+  const [messages, setMessages] = useState<Message[]>([])
   const [input, setInput] = useState('')
   const [isOpen, setIsOpen] = useState(false)
+  const [status, setStatus] = useState<'idle' | 'submitted'>('idle')
+  const [error, setError] = useState(false)
   const scrollRef = useRef<HTMLDivElement>(null)
 
-  const busy = status === 'submitted' || status === 'streaming'
+  const busy = status === 'submitted'
 
   useEffect(() => {
     const el = scrollRef.current
     if (el) el.scrollTop = el.scrollHeight
   }, [messages, status])
 
-  const submit = (text: string) => {
+  const submit = async (text: string) => {
     const trimmed = text.trim()
-    if (!trimmed || busy) return
-    sendMessage({ text: trimmed })
+    if (!trimmed || busy || !projectId) return
+    
     setInput('')
+    setError(false)
+    setStatus('submitted')
+    
+    const newMessages = [...messages, { id: Math.random().toString(), role: 'user' as const, content: trimmed }]
+    setMessages(newMessages)
+    
+    try {
+      const token = getToken()
+      const res = await fetch(`${API_URL}/api/v1/chat/rag`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { Authorization: `Bearer ${token}` } : {})
+        },
+        body: JSON.stringify({
+          project_id: projectId,
+          messages: newMessages.map(m => ({ role: m.role, content: m.content }))
+        })
+      })
+      
+      if (!res.ok) throw new Error('Request failed')
+      
+      const data = await res.json()
+      setMessages(prev => [...prev, { id: Math.random().toString(), role: 'assistant', content: data.content }])
+    } catch (err) {
+      setError(true)
+    } finally {
+      setStatus('idle')
+    }
   }
 
   if (!isOpen) {
@@ -111,7 +147,7 @@ export function ArchitectChat() {
                     {isUser ? 'You' : 'Architect'}
                   </span>
                   <div className="mt-0.5 whitespace-pre-wrap text-[11px] leading-relaxed">
-                    {message.parts.map((part, i) => (part.type === 'text' ? <span key={i}>{part.text}</span> : null))}
+                    {message.content}
                   </div>
                 </div>
               </div>

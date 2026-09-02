@@ -8,8 +8,12 @@ import { OfficeViewport } from './office-viewport'
 import { CommandCenter } from './command-center'
 import { TeamTab } from './team-tab'
 
+import { useSearchParams } from 'next/navigation'
+
 export function ControlRoom() {
-  const mission = useMissionSim()
+  const searchParams = useSearchParams()
+  const projectId = searchParams.get('project')
+  const mission = useMissionSim(projectId)
   const [teamOpen, setTeamOpen] = useState(false)
 
   /* close the team directory with Escape */
@@ -45,7 +49,7 @@ export function ControlRoom() {
             Team
           </button>
           <Link
-            href="/setup"
+            href={`/setup?project=${mission.id}`}
             className="border-2 border-foreground bg-card px-3 py-1.5 font-mono text-[9px] uppercase tracking-widest pixel-shadow-sm hover:bg-muted"
           >
             Edit inputs
@@ -90,7 +94,7 @@ export function ControlRoom() {
       {/* main split: office viewport + command center */}
       <div className="grid min-h-0 flex-1 grid-cols-1 gap-4 p-4 lg:grid-cols-[minmax(0,1fr)_minmax(360px,480px)] md:p-5">
         <div className="min-h-0 max-lg:h-[42svh]">
-          <OfficeViewport mission={mission} />
+          <OfficeViewport mission={mission} projectId={projectId} />
         </div>
         <div className="min-h-0 max-lg:flex-1">
           <CommandCenter mission={mission} />

@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react'
 import type { Team } from './agents'
+import { getToken } from './auth'
 
 /* ------------------------------------------------------------------ */
 /* Types — shaped so a real backend event stream (SSE / WebSocket)     */
@@ -45,6 +46,7 @@ export type MissionState = {
   hires: HireEvent[]
   agents: Record<string, AgentState>
   complete: boolean
+  architecture_report?: any
 }
 
 /* ------------------------------------------------------------------ */
@@ -177,11 +179,15 @@ function badgeFor(agent: string, index: number): string {
   return `MYC-${String(index + 1).padStart(3, '0')}-${agent.slice(0, 3).toUpperCase()}`
 }
 
+// Determine API URLs
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'
+const WS_URL = API_URL.replace(/^http/, 'ws')
+
 /* ------------------------------------------------------------------ */
 /* Hook                                                                */
 /* ------------------------------------------------------------------ */
 
-export function useMissionSim(): MissionState {
+export function useMissionSim(projectId?: string | null): MissionState {
   const [state, setState] = useState<MissionState>({
     clock: 0,
     logs: [],
@@ -189,11 +195,115 @@ export function useMissionSim(): MissionState {
     agents: INITIAL_AGENTS,
     complete: false,
   })
+
+  // ---- BACKEND DRIVEN MODE ----
+  useEffect(() => {
+    if (!projectId) return
+
+    let active = true
+    let ws: WebSocket | null = null
+
+    async function loadSnapshot() {
+      try {
+        const token = getToken()
+        const res = await fetch(`${API_URL}/api/v1/realtime/snapshot/${projectId}`, {
+          headers: token ? { Authorization: `Bearer ${token}` } : {}
+        })
+        if (!res.ok) {
+          console.error('Snapshot load failed:', res.status, res.statusText)
+          try {
+            const errorText = await res.text()
+            console.error('Snapshot error details:', errorText)
+          } catch (e) {}
+          throw new Error('Failed to load snapshot')
+        }
+        const data = await res.json()
+        if (!active) return
+        if (data && !data.error) {
+          setState(data)
+        }
+      } catch (err) {
+        console.error("Failed to load project snapshot:", err)
+      }
+    }
+
+    loadSnapshot().then(() => {
+      if (!active) return
+      ws = new WebSocket(`${WS_URL}/api/v1/realtime/sessions/${projectId}`)
+      
+      ws.onmessage = (event) => {
+        try {
+          const msg = JSON.parse(event.data)
+          const kind = msg.kind
+          const data = msg.data
+          
+          setState(prev => {
+            const next = { ...prev }
+            const relTime = next.clock // Use current clock for new events
+            
+            if (kind === 'log') {
+              next.logs = [...prev.logs, { id: prev.logs.length, at: relTime, level: data.level, text: data.text }]
+            } else if (kind === 'hire') {
+              next.hires = [...prev.hires, {
+                id: prev.hires.length,
+                at: relTime,
+                agent: data.agent,
+                team: data.team,
+                role: data.role,
+                badge: data.badge,
+                clearance: data.clearance,
+                mandate: data.mandate
+              }]
+              next.agents = {
+                ...prev.agents,
+                [data.agent]: { name: data.agent, phase: 'hired', task: 'Awaiting assignment', startedAt: null, finishedAt: null }
+              }
+            } else if (kind === 'start') {
+              const a = prev.agents[data.agent] || { name: data.agent }
+              next.agents = {
+                ...prev.agents,
+                [data.agent]: { ...a, phase: 'working', task: data.task, startedAt: relTime }
+              }
+            } else if (kind === 'finish') {
+              const a = prev.agents[data.agent]
+              if (a) {
+                next.agents = {
+                  ...prev.agents,
+                  [data.agent]: { ...a, phase: 'done', finishedAt: relTime }
+                }
+              }
+            } else if (kind === 'complete') {
+              next.complete = true
+            }
+            return next
+          })
+        } catch (err) {
+          console.error("WS parse error", err)
+        }
+      }
+    })
+
+    // Tick the clock locally just to keep the UI timer moving
+    const startTick = performance.now()
+    const timer = setInterval(() => {
+      setState(s => ({ ...s, clock: s.clock + (performance.now() - startTick) }))
+    }, 100)
+
+    return () => {
+      active = false
+      if (ws) ws.close()
+      clearInterval(timer)
+    }
+  }, [projectId])
+
+  // ---- SCRIPTED TIMELINE MODE (MARKETING DEMO) ----
   const startRef = useRef<number | null>(null)
   const cursorRef = useRef(0)
   const idRef = useRef(0)
 
   useEffect(() => {
+    if (projectId) return // Disable mock if real project
+
     startRef.current = performance.now()
 
     const tick = () => {
@@ -249,7 +359,7 @@ export function useMissionSim(): MissionState {
               if (atlas) agents.Atlas = { ...atlas, phase: 'done', finishedAt: ev.at }
             }
           }
-          next = { clock: elapsed, logs, hires, agents, complete }
+          next = { clock: elapsed, logs, hires, agents, complete, architecture_report: prev.architecture_report }
         } else {
           next = { ...prev, clock: elapsed }
         }
@@ -259,7 +369,7 @@ export function useMissionSim(): MissionState {
 
     const interval = window.setInterval(tick, 250)
     return () => window.clearInterval(interval)
-  }, [])
+  }, [projectId])
 
   return state
 }

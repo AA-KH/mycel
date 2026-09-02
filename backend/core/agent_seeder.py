@@ -17,7 +17,7 @@ async def seed_agents():
     Scrapes all agents from the teams directory and upserts them into MongoDB.
     """
     await mongodb_connection.connect()
-    db = mongodb_connection.client.get_database("mycel")
+    db = mongodb_connection.db
     agents_collection = db.agents
     
     teams_dir = backend_dir / "teams"

@@ -108,11 +108,22 @@ export async function fetchSetupStatus(token: string): Promise<SetupStatus> {
   }
 }
 
-/** Persist the wizard answers and mark onboarding complete. */
-export async function saveSetup(
-  token: string,
-  setup: unknown,
-): Promise<SetupStatus> {
+/** Fetch an existing project by ID */
+export async function fetchProjectSetup(token: string, projectId: string): Promise<Record<string, unknown> | null> {
+  try {
+    const res = await fetch(`${API_URL}/api/v1/projects/${projectId}`, {
+      headers: { Authorization: `Bearer ${token}` },
+      cache: 'no-store',
+    })
+    if (!res.ok) return null
+    return (await res.json()) as Record<string, unknown>
+  } catch {
+    return null
+  }
+}
+
+/** Persist a draft of the wizard answers to /api/setup/me without marking complete */
+export async function saveDraftSetup(token: string, setup: unknown): Promise<void> {
   const res = await fetch(`${API_URL}/api/setup/me`, {
     method: 'POST',
     headers: {
@@ -121,6 +132,52 @@ export async function saveSetup(
     },
     body: JSON.stringify(setup),
   })
-  if (!res.ok) throw new Error('Could not save your setup')
-  return (await res.json()) as SetupStatus
+  if (!res.ok) throw new Error('Could not save draft setup')
+}
+
+/** Persist the wizard answers and mark onboarding complete. */
+export async function saveSetup(
+  token: string,
+  setup: unknown,
+): Promise<{ project_id: string; status: string }> {
+  const res = await fetch(`${API_URL}/api/v1/projects/create`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify(setup),
+  })
+  if (!res.ok) throw new Error('Could not save your setup and create project')
+  return await res.json()
+}
+
+/** Upload a file to the documents endpoint */
+export async function uploadDocument(
+  token: string,
+  file: File,
+): Promise<{ filename: string; cloudinary_url: string; message: string }> {
+  const formData = new FormData()
+  formData.append('file', file)
+  formData.append('project_id', 'draft')
+  
+  const res = await fetch(`${API_URL}/api/v1/documents/upload`, {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+    body: formData,
+  })
+  
+  if (!res.ok) {
+    let detail = 'Upload failed'
+    try {
+      const data = await res.json()
+      if (typeof data?.detail === 'string') detail = data.detail
+    } catch {}
+    throw new Error(detail)
+  }
+  
+  const response = await res.json()
+  return response.data
 }

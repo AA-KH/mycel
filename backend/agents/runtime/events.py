@@ -71,7 +71,7 @@ class RuntimeEventPublisher:
             ws_data = session_data.copy()
             ws_data["last_heartbeat_at"] = ws_data["last_heartbeat_at"].isoformat()
             ws_data["event"] = f"agent.execution.{new_state.lower()}"
-            await manager.broadcast(ws_data)
+            await manager.broadcast(task_id, ws_data)
         except Exception as e:
             logger.error(f"Failed to report realtime status: {e}")
             

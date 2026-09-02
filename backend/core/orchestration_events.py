@@ -116,7 +116,7 @@ async def emit_orchestration_event(
 
     # 1. Broadcast over WebSocket (real-time)
     try:
-        await manager.broadcast(dumped_event)
+        await manager.broadcast(task_id, dumped_event)
         logger.debug(f"Orchestration event broadcast: {phase.value} for task {task_id}")
     except Exception as e:
         logger.error(f"Failed to broadcast orchestration event: {e}")

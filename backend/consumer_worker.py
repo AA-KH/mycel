@@ -11,8 +11,10 @@ import uuid
 
 from core.logger import logger
 from core.rabbitmq import rabbitmq_connection, rabbitmq_consumer
+from core.mongodb import mongodb_connection
 from core.context import request_id_var
 from api.v1.routes.auth.consumer import auth0_webhook_received_consumer
+from api.v1.routes.documents_consumer import document_ingest_consumer
 
 
 async def shutdown(signal_type):
@@ -26,6 +28,7 @@ async def shutdown(signal_type):
 
     await asyncio.gather(*tasks, return_exceptions=True)
     await rabbitmq_connection.close()
+    await mongodb_connection.close()
     logger.info("Consumer worker shutdown complete.")
 
 
@@ -41,7 +44,10 @@ async def wrapped_consumer(message_body: bytes, *args, **kwargs):
     try:
         # We delegate to the actual consumer. 
         # In the future, this is where we would decode the standard EventEnvelope.
-        await auth0_webhook_received_consumer(message_body, *args, **kwargs)
+        if "auth0" in args[0] if args else False:
+            await auth0_webhook_received_consumer(message_body, *args, **kwargs)
+        else:
+            await document_ingest_consumer(message_body, *args, **kwargs)
     except Exception as e:
         logger.exception("Worker execution failed", extra={"error": str(e)})
         # Do not raise here unless we want the message to be nacked and potentially requeued
@@ -60,6 +66,22 @@ async def main():
         loop.add_signal_handler(sig, lambda s=sig: asyncio.create_task(shutdown(s)))
 
     try:
+        # Connect to MongoDB
+        await mongodb_connection.connect()
+        logger.info("Connected to MongoDB in consumer worker")
+        
+        # Configure Cloudinary
+        from core.config import settings
+        if settings.cloudinary_api_key and settings.cloudinary_cloud_name:
+            import cloudinary
+            cloudinary.config(
+                cloud_name=settings.cloudinary_cloud_name,
+                api_key=settings.cloudinary_api_key,
+                api_secret=settings.cloudinary_api_secret,
+                secure=True
+            )
+            logger.info("Cloudinary configured in consumer worker")
+
         # Connect to RabbitMQ
         await rabbitmq_connection.connect()
         logger.info("Connected to RabbitMQ")
@@ -67,6 +89,9 @@ async def main():
         # Register event handlers
         rabbitmq_consumer.register_handler(
             "auth0.webhook.received", wrapped_consumer
+        )
+        rabbitmq_consumer.register_handler(
+            "document.ingest", wrapped_consumer
         )
 
         logger.info("All event handlers registered.")

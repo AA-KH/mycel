@@ -122,7 +122,7 @@ async def emit_event(event_type: str, conversation_id: str, payload: Dict[str, A
         "domain": "real_estate",
     }
     try:
-        await manager.broadcast(event)
+        await manager.broadcast(conversation_id, event)
     except Exception as e:
         logger.warning(f"[EventBus] Failed to broadcast {event_type}: {e}")
 

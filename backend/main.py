@@ -30,6 +30,26 @@ async def lifespan(app: FastAPI):
     except Exception as error:
         logger.error("Failed to initialize RabbitMQ", extra={"error": str(error)})
 
+    # Config readiness checks
+    from core.config import settings
+    
+    if settings.cloudinary_api_key and settings.cloudinary_cloud_name:
+        import cloudinary
+        cloudinary.config(
+            cloud_name=settings.cloudinary_cloud_name,
+            api_key=settings.cloudinary_api_key,
+            api_secret=settings.cloudinary_api_secret,
+            secure=True
+        )
+        logger.info("Cloudinary configured")
+    else:
+        logger.warning("Cloudinary is not fully configured. File uploads to Cloudinary will fail.")
+        
+    if not settings.groq_extreme_pool and not settings.groq_api_key:
+        logger.warning("Groq API keys are not configured. AI generation will fail.")
+    if not settings.gemini_api_key:
+        logger.warning("Gemini API key is not configured.")
+
     yield
 
     logger.info("Shutting down FastAPI application")

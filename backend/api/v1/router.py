@@ -3,36 +3,43 @@ Main V1 Router.
 Consolidates all v1 specific endpoints.
 """
 
-from fastapi import APIRouter
-from .routes import health, employees
+from fastapi import APIRouter, Depends
+from core.auth import get_current_user
+from .routes import health, employees, chat
 from .routes import companies, departments, teams, positions, skills, tools, knowledge, reasoning, pipelines, stage_definitions, quality, outputs, intelligence, network, resilience, council, project, agents, documents
 
 router = APIRouter()
 
 # Register v1 routes
 router.include_router(health.router, tags=["System"])
-router.include_router(agents.router, prefix="/agents", tags=["Agents"])
-router.include_router(documents.router, tags=["Documents"])
-router.include_router(companies.router, tags=["Organization (Companies)"])
-router.include_router(departments.router, tags=["Organization (Departments)"])
-router.include_router(teams.router, tags=["Organization (Teams)"])
-router.include_router(positions.router, tags=["Organization (Positions)"])
-router.include_router(skills.router, tags=["Workforce (Skills)"])
-router.include_router(tools.router, tags=["Tools"])
-router.include_router(knowledge.router, tags=["Knowledge"])
-router.include_router(reasoning.router, tags=["Reasoning"])
-router.include_router(stage_definitions.router, tags=["Pipelines"])
-router.include_router(pipelines.router, tags=["Pipelines"])
-router.include_router(outputs.router, tags=["Outputs"])
-router.include_router(quality.router, tags=["Quality"])
-router.include_router(employees.router, tags=["Employees"])
-router.include_router(project.router, prefix="/projects", tags=["Projects"])
 
-router.include_router(intelligence.router, tags=["Intelligence Team"])
-router.include_router(network.router, tags=["Network Team"])
-router.include_router(resilience.router, tags=["Resilience Team"])
-router.include_router(council.router, tags=["Council Team"])
+protected_deps = [Depends(get_current_user)]
+
+router.include_router(agents.router, prefix="/agents", tags=["Agents"], dependencies=protected_deps)
+router.include_router(documents.router, tags=["Documents"], dependencies=protected_deps)
+router.include_router(companies.router, tags=["Organization (Companies)"], dependencies=protected_deps)
+router.include_router(departments.router, tags=["Organization (Departments)"], dependencies=protected_deps)
+router.include_router(teams.router, tags=["Organization (Teams)"], dependencies=protected_deps)
+router.include_router(positions.router, tags=["Organization (Positions)"], dependencies=protected_deps)
+router.include_router(skills.router, tags=["Workforce (Skills)"], dependencies=protected_deps)
+router.include_router(tools.router, tags=["Tools"], dependencies=protected_deps)
+router.include_router(knowledge.router, tags=["Knowledge"], dependencies=protected_deps)
+router.include_router(reasoning.router, tags=["Reasoning"], dependencies=protected_deps)
+router.include_router(stage_definitions.router, tags=["Pipelines"], dependencies=protected_deps)
+router.include_router(pipelines.router, tags=["Pipelines"], dependencies=protected_deps)
+router.include_router(outputs.router, tags=["Outputs"], dependencies=protected_deps)
+router.include_router(quality.router, tags=["Quality"], dependencies=protected_deps)
+router.include_router(employees.router, tags=["Employees"], dependencies=protected_deps)
+router.include_router(project.router, prefix="/projects", tags=["Projects"]) # Dependency applied inside create_project
+
+router.include_router(intelligence.router, tags=["Intelligence Team"], dependencies=protected_deps)
+router.include_router(network.router, tags=["Network Team"], dependencies=protected_deps)
+router.include_router(resilience.router, tags=["Resilience Team"], dependencies=protected_deps)
+router.include_router(council.router, tags=["Council Team"], dependencies=protected_deps)
 
 # Real-time WebSocket and broadcast
 from .routes.realtime import router as realtime_router
-router.include_router(realtime_router, tags=["Realtime"])
+router.include_router(realtime_router, prefix="/realtime", tags=["Realtime"])
+
+# Chat / RAG
+router.include_router(chat.router, prefix="/chat", tags=["Chat"])

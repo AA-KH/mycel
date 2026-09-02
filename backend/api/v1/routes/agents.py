@@ -12,7 +12,7 @@ async def get_all_agents():
     Useful for the Frontend 'View All Team' directory.
     """
     try:
-        db = mongodb_connection.client.get_database("mycel")
+        db = mongodb_connection.db
         agents_cursor = db.agents.find({}, {"_id": 0})
         agents = await agents_cursor.to_list(length=100)
         return agents
@@ -26,7 +26,7 @@ async def get_agent(agent_id: str):
     Fetch a specific agent by ID.
     """
     try:
-        db = mongodb_connection.client.get_database("mycel")
+        db = mongodb_connection.db
         agent = await db.agents.find_one({"agent_id": agent_id}, {"_id": 0})
         if not agent:
             raise HTTPException(status_code=404, detail="Agent not found")
