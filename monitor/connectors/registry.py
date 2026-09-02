@@ -20,6 +20,7 @@ from .openmeteo import OpenMeteoConnector
 from .usgs import USGSConnector
 from .wits import WITSConnector
 from .wto import WTOConnector
+from .tradewatch import TradeWatchConnector
 
 
 class ConnectorRegistry:
@@ -40,6 +41,7 @@ class ConnectorRegistry:
             "wto": WTOConnector,
             "global_trade_alert": GTAConnector,
             "wits": WITSConnector,
+            "tradewatch": TradeWatchConnector,
         }
 
     def activate(self, source_names: list[str]) -> None:
@@ -73,6 +75,11 @@ class ConnectorRegistry:
                 connector = GTAConnector(self.config)
                 if not connector.is_configured:
                     logger.info("Global Trade Alert not configured — skipping")
+                    continue
+            elif name == "tradewatch":
+                connector = TradeWatchConnector(self.config)
+                if not connector.is_configured:
+                    logger.info("TradeWatch API key not configured — skipping")
                     continue
 
             connector = self._available[name](self.config)

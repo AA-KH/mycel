@@ -17,6 +17,21 @@ class AlertPayload(BaseModel):
     affected_entities: Optional[List[str]] = []
     project_id: Optional[str] = None # Added for demo to target a specific project if needed
 
+class TariffAlertPayload(BaseModel):
+    imposingCountry: str
+    imposingCountryName: str
+    targetCountry: str
+    targetCountryName: str
+    sector: str
+    previousRatePercent: Optional[float] = None
+    newRatePercent: float
+    delta: float
+    unit: str
+    effectiveDate: Optional[str] = None
+    legalBasis: Optional[str] = None
+    notes: Optional[str] = None
+    project_id: Optional[str] = None
+
 async def run_crisis_rearchitecture_in_background(project_id: str, alert: AlertPayload):
     from core.orchestrator import MasterOrchestrator
     try:
@@ -124,3 +139,30 @@ async def receive_monitor_alert(
     background_tasks.add_task(run_crisis_rearchitecture_in_background, project_id, payload)
     
     return {"status": "success", "message": "Alert received, crisis re-architecture initiated."}
+
+@router.post("/tariff-alert")
+async def receive_tariff_alert(
+    payload: TariffAlertPayload,
+    background_tasks: BackgroundTasks
+):
+    """
+    Receives a specific tariff increase payload from the demo site.
+    Translates it into an AlertPayload and triggers the crisis flow.
+    """
+    logger.info(f"Received TARIFF ALERT: {payload.imposingCountryName} -> {payload.targetCountryName}")
+    
+    title = f"URGENT: Tariff Increase by {payload.imposingCountryName} on {payload.targetCountryName} ({payload.sector})"
+    description = f"A new tariff has been imposed by {payload.imposingCountryName} on {payload.targetCountryName} for sector {payload.sector}. The rate has increased from {payload.previousRatePercent}% to {payload.newRatePercent}% (a {payload.delta}% increase). Effective Date: {payload.effectiveDate}. Legal Basis: {payload.legalBasis}."
+    
+    alert = AlertPayload(
+        alert_id=f"tariff-{datetime.datetime.utcnow().timestamp()}",
+        severity="CRITICAL",
+        title=title,
+        description=description,
+        affected_entities=[payload.targetCountry, payload.sector],
+        project_id=payload.project_id
+    )
+    
+    # Delegate to the main alert processor
+    return await receive_monitor_alert(alert, background_tasks)
+

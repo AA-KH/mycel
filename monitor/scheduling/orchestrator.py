@@ -330,7 +330,7 @@ class Orchestrator:
                         if qg.source == source_name:
                             batch_events = await connector.fetch(query=qg.query)
                             events.extend(batch_events)
-                elif source_name in ("wto", "global_trade_alert", "wits"):
+                elif source_name in ("wto", "global_trade_alert", "wits", "tradewatch"):
                     # Trade sources receive structured query group parameters
                     for qg in self.profile.query_groups:
                         if qg.source == source_name:

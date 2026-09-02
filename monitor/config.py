@@ -89,6 +89,13 @@ class MonitorConfig(BaseSettings):
     wits_base_url: str = "https://wits.worldbank.org/API/V1/SDMX/V21/rest/data"
     wits_timeout: int = 30
 
+    # ── Source: TradeWatch ──
+    tradewatch_enabled: bool = True
+    tradewatch_api_url: str = "https://tariffregulator.onrender.com/api/v1/monitor/tariff-alert"
+    tradewatch_api_key: Optional[str] = Field(default=None, alias="TRADEWATCH_API_KEY")
+    tradewatch_timeout: int = 30
+
+
     # ── Scheduling ──
     default_poll_interval: int = 3600  # 1 hour
     gdelt_poll_interval: int = 900  # 15 min
@@ -98,6 +105,7 @@ class MonitorConfig(BaseSettings):
     wto_poll_interval: int = 86400  # 24h — periodic state observer
     gta_poll_interval: int = 86400  # 24h
     wits_poll_interval: int = 86400  # 24h — periodic state observer
+    tradewatch_poll_interval: int = 3600  # 1h
 
     # ── Severity Thresholds ──
     # Impact score thresholds for severity classification
