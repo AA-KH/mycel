@@ -40,6 +40,27 @@ async def chat_rag(request: ChatRequest, _ = Depends(get_current_user)):
         
     architecture_report = project.get("architecture_report", {})
     
+    # Condense architecture report to prevent LLM context window bloat and 429 token limits
+    import json
+    condensed_report = {}
+    if architecture_report:
+        condensed_report["decision"] = architecture_report.get("decision", {})
+        condensed_report["rollout"] = architecture_report.get("rollout", [])
+        condensed_stages = []
+        for stage in architecture_report.get("stages", []):
+            nodes = stage.get("nodes", [])
+            condensed_stages.append({
+                "id": stage.get("id"),
+                "label": stage.get("label"),
+                "owner": stage.get("owner"),
+                "question": stage.get("question"),
+                "node_count": len(nodes),
+                "note": "Individual node details omitted to save context space."
+            })
+        condensed_report["stages"] = condensed_stages
+        
+    condensed_json_str = json.dumps(condensed_report, indent=2)
+    
     # 2. Retrieve Context via Vector Store
     vector_store = MongoDBVectorStore()
     docs = await vector_store.search(request.project_id, last_user_message, top_k=4)
@@ -50,8 +71,8 @@ async def chat_rag(request: ChatRequest, _ = Depends(get_current_user)):
     system_prompt = f"""You are "The Architect" — the AI assistant of MYCEL Mission Control.
 You are helping the user understand the supply-chain architecture for their project '{project.get('productName') or project.get('businessType')}'.
 
-### THE ARCHITECTURE BLUEPRINT (JSON)
-{architecture_report}
+### THE ARCHITECTURE BLUEPRINT (CONDENSED SUMMARY)
+{condensed_json_str}
 
 ### ADDITIONAL KNOWLEDGE BASE CONTEXT (From Uploaded Documents)
 {context_text if context_text else 'No specific documents retrieved for this query.'}
@@ -59,6 +80,7 @@ You are helping the user understand the supply-chain architecture for their proj
 Rules:
 - Ground every answer in the blueprint and knowledge base context above.
 - If something is not covered, say so plainly.
+- Note that individual nodes have been omitted from the blueprint to save space; if asked about them, explain this limitation.
 - Keep answers concise and clear — short paragraphs or tight bullet lists. No markdown headings.
 - Stay in character as the mission's architect assistant.
 """
