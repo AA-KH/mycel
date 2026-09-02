@@ -96,9 +96,8 @@ class RohanAgent(ArchitectureBaseAgent):
         elif function_name == "generate_mermaid_graph":
             from teams.architecture.shared_tools import generate_mermaid_graph
             return await generate_mermaid_graph(
-                arguments.get("graph_type", "flowchart"),
-                arguments.get("elements", []),
-                arguments.get("title", "Supply Chain Topology")
+                mermaid_syntax=arguments.get("mermaid_syntax", ""),
+                title=arguments.get("title", "Supply Chain Topology")
             )
         else:
             return await super().execute_tool(function_name, arguments)

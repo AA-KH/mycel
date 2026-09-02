@@ -49,25 +49,13 @@ def get_tools() -> list:
                 "parameters": {
                     "type": "object",
                     "properties": {
-                        "graph_type": {
+                        "mermaid_syntax": {
                             "type": "string",
-                            "enum": ["flowchart"],
-                            "description": "Always use flowchart for supply chain networks."
-                        },
-                        "elements": {
-                            "type": "array",
-                            "items": {
-                                "type": "object",
-                                "properties": {
-                                    "source": {"type": "string", "description": "Upstream node"},
-                                    "target": {"type": "string", "description": "Downstream node"},
-                                    "label": {"type": "string", "description": "Transport method / duration"}
-                                }
-                            }
+                            "description": "Raw Mermaid.js syntax (e.g., 'flowchart TD\n  A-->B'). Do not include markdown codeblocks."
                         },
                         "title": {"type": "string"}
                     },
-                    "required": ["graph_type", "elements"]
+                    "required": ["mermaid_syntax", "title"]
                 }
             }
         }

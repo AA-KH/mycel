@@ -42,9 +42,8 @@ class ArchitectureBaseAgent(BaseAgent):
 
         if function_name == "generate_mermaid_graph":
             return await generate_mermaid_graph(
-                arguments.get("graph_type", "flowchart"),
-                arguments.get("elements", []),
-                arguments.get("title", "Architecture Diagram")
+                mermaid_syntax=arguments.get("mermaid_syntax", ""),
+                title=arguments.get("title", "Architecture Diagram")
             )
         elif function_name == "validate_json_schema":
             return await validate_json_schema(
