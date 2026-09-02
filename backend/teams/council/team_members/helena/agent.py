@@ -23,6 +23,16 @@ class HelenaAgent(CouncilBaseAgent):
         )
 
     async def execute_tool(self, function_name: str, arguments: dict):
+        from core.approval_gate import gate_tool_call
+        allowed = await gate_tool_call(
+            session_id=self.session_id or "unknown",
+            agent_name=self.name,
+            tool_name=function_name,
+            arguments=arguments,
+        )
+        if not allowed:
+            return f"[BLOCKED by ArmorIQ] Tool '{function_name}' was denied. Agent must proceed without this data."
+
         if function_name == "benchmark_supplier_cost":
             return await benchmark_supplier_cost(
                 arguments.get("supplier_name", ""),
@@ -72,6 +82,12 @@ class HelenaAgent(CouncilBaseAgent):
                 arguments.get("country_code", ""),
                 arguments.get("country_name", ""),
                 arguments.get("contract_duration_years", 1)
+            )
+        elif function_name == "email_stakeholders":
+            from teams.council.team_members.helena.tools import email_stakeholders
+            return await email_stakeholders(
+                arguments.get("subject", ""),
+                arguments.get("report_body", "")
             )
 
         # Fall through to shared Council tools

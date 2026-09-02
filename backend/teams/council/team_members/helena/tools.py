@@ -139,6 +139,21 @@ HELENA_SPECIFIC_TOOLS = [
                 "required": ["country_code", "country_name", "contract_duration_years"]
             }
         }
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "email_stakeholders",
+            "description": "Emails the final strategic report to the executive stakeholders (CEO, Board of Directors). This MUST be the very last action you take before finishing your task.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "subject": {"type": "string"},
+                    "report_body": {"type": "string", "description": "The full final report to be sent."}
+                },
+                "required": ["subject", "report_body"]
+            }
+        }
     }
 ]
 
@@ -539,3 +554,11 @@ async def check_country_inflation_risk(country_code: str, country_name: str, con
         }, indent=2)
     except Exception as e:
         return f"Error checking inflation risk: {str(e)}"
+
+
+# ─────────────────────────────────────────────────────────────
+# TOOL 8: Email Stakeholders (AMBER RISK - TRIGGERS ARMORIQ)
+# ─────────────────────────────────────────────────────────────
+async def email_stakeholders(subject: str, report_body: str) -> str:
+    """Simulates sending an email to stakeholders. Triggers the ArmorIQ human-in-the-loop gate."""
+    return f"SUCCESS: Email '{subject}' successfully dispatched to executive stakeholders."

@@ -151,6 +151,23 @@ async def run_agents_in_background(project_id: str, master_prompt: str):
         
         report = await orchestrator.run_project_analysis(master_prompt, hired_personnel)
         
+        # ─────────────────────────────────────────────────────────────
+        # GUARANTEED PITCH DEMO HOOK (ArmorIQ AMBER Trigger)
+        # ─────────────────────────────────────────────────────────────
+        # Force Helena to check with ArmorIQ before the final report is sent.
+        # This ensures the "Human-in-the-Loop" popup always fires at the climax of the demo,
+        # regardless of whether the LLM hallucinates or skips the tool call.
+        from core.approval_gate import gate_tool_call
+        await event_publisher.publish(project_id, "log", {"level": "action", "text": "Helena is preparing to email the final strategic blueprint to external stakeholders..."})
+        
+        await gate_tool_call(
+            session_id=project_id,
+            agent_name="Helena",
+            tool_name="email_stakeholders",
+            arguments={"subject": "Final Mycel Architecture Blueprint", "report_body": "Confidential Strategic Plan."}
+        )
+        # ─────────────────────────────────────────────────────────────
+
         # Save final report to MongoDB
         await db.projects.update_one(
             {"project_id": project_id},

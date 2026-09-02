@@ -77,6 +77,7 @@ _TOOL_CLASS: Dict[str, ActionClass] = {
 
     # AMBER — requires human approval (private/external data or business accounts)
     "contact_supplier":             ActionClass.AMBER,
+    "email_stakeholders":           ActionClass.AMBER,
     "request_quotation":            ActionClass.AMBER,
     "request_private_information":  ActionClass.AMBER,
     "access_business_account":      ActionClass.AMBER,
