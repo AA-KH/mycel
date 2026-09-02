@@ -40,15 +40,21 @@ async def seed_agents():
             profile_path = member_dir / "profile.py"
             if profile_path.exists():
                 try:
-                    # Parse using regex to avoid import errors (Pydantic validation errors)
+                    # Mock out models to avoid Pydantic validation errors during dynamic import
+                    import sys
+                    from unittest.mock import MagicMock
+                    sys.modules['workforce'] = MagicMock()
+                    sys.modules['workforce.employees'] = MagicMock()
+                    sys.modules['workforce.employees.models'] = MagicMock()
+                    
+                    # Parse profile using regex to avoid Pydantic validation errors
                     with open(profile_path, "r", encoding="utf-8") as f:
                         content = f.read()
                     
                     import re
                     name_match = re.search(r'first_name\s*=\s*[\'"]([^\'"]+)[\'"]', content)
-                    role_match = re.search(r'role\s*=\s*[\'"]([^\'"]+)[\'"]', content)
+                    role_match = re.search(r'(?:title|role)\s*=\s*[\'"]([^\'"]+)[\'"]', content)
                     
-                    # Fallback to NAME and ROLE if first_name not found
                     if not name_match:
                         name_match = re.search(r'NAME\s*=\s*[\'"]([^\'"]+)[\'"]', content)
                     if not role_match:
@@ -56,6 +62,33 @@ async def seed_agents():
                         
                     name = name_match.group(1) if name_match else member_dir.name.capitalize()
                     role = role_match.group(1) if role_match else "Unknown Role"
+                    
+                    # Try to fetch prompt and tools via dynamic import
+                    mandate = ""
+                    tools_list = []
+                    
+                    module_base = f"teams.{team_dir.name}.team_members.{member_dir.name}"
+                    
+                    try:
+                        # Ensure we mock profile imports if prompt imports from profile
+                        import sys
+                        from unittest.mock import MagicMock
+                        sys.modules['workforce'] = MagicMock()
+                        sys.modules['workforce.employees'] = MagicMock()
+                        sys.modules['workforce.employees.models'] = MagicMock()
+                        
+                        prompt_mod = importlib.import_module(f"{module_base}.prompt")
+                        mandate = getattr(prompt_mod, "SYSTEM_PROMPT", "")[:500] + "..." # Truncate for summary
+                    except Exception:
+                        pass
+                        
+                    try:
+                        tools_mod = importlib.import_module(f"{module_base}.tools")
+                        if hasattr(tools_mod, "get_tools"):
+                            tools_raw = tools_mod.get_tools()
+                            tools_list = [t.get("function", {}).get("name") for t in tools_raw if t.get("type") == "function"]
+                    except Exception:
+                        pass
                     
                     agent_id = f"{team_dir.name}_{member_dir.name}"
                     department = team_dir.name.capitalize()
@@ -67,7 +100,9 @@ async def seed_agents():
                         "department": department,
                         "status": "AVAILABLE",
                         "skills": [f"Expertise in {role}"],
-                        "cost_per_hour": 150 # Dummy cost for now
+                        "tools": tools_list,
+                        "mandate": mandate,
+                        "cost_per_hour": 150 # Default cost
                     }
                     
                     # Upsert into MongoDB
@@ -78,7 +113,7 @@ async def seed_agents():
                     )
                     
                     hired_agents.append(name)
-                    logger.info(f"Seeded Agent: {name} ({role})")
+                    logger.info(f"Seeded Agent: {name} ({role}) with {len(tools_list)} tools.")
                     
                 except Exception as e:
                     logger.error(f"Failed to load agent {member_dir.name}: {e}")
