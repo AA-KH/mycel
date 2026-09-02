@@ -114,7 +114,7 @@ export function CommandCenter({ mission }: { mission: MissionState }) {
           <AtlasLogTab logs={mission.logs} complete={mission.complete} />
         </div>
         <div id="panel-hires" role="tabpanel" aria-labelledby="tab-hires" hidden={tab !== 'hires'} className="h-full">
-          <HireCardsTab hires={mission.hires} />
+          <HireCardsTab hires={mission.hires} agents={mission.agents} clock={mission.clock} />
         </div>
         <div id="panel-agents" role="tabpanel" aria-labelledby="tab-agents" hidden={tab !== 'agents'} className="h-full">
           <AgentRosterTab agents={mission.agents} clock={mission.clock} />
