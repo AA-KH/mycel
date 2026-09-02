@@ -49,7 +49,13 @@ export function ControlRoom() {
             Team
           </button>
           <Link
-            href={`/setup?project=${mission.id}`}
+            href="/"
+            className="border-2 border-foreground bg-card px-3 py-1.5 font-mono text-[9px] uppercase tracking-widest pixel-shadow-sm hover:bg-muted hover:bg-destructive/10 hover:text-destructive hover:border-destructive transition-colors"
+          >
+            Exit
+          </Link>
+          <Link
+            href={`/setup?project=${projectId || ''}`}
             className="border-2 border-foreground bg-card px-3 py-1.5 font-mono text-[9px] uppercase tracking-widest pixel-shadow-sm hover:bg-muted"
           >
             Edit inputs
