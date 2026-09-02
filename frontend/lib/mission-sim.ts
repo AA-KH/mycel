@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from 'react'
 import type { Team } from './agents'
 import { getToken } from './auth'
+import type { ApprovalRequest } from '@/components/control/approval-modal'
 
 /* ------------------------------------------------------------------ */
 /* Types — shaped so a real backend event stream (SSE / WebSocket)     */
@@ -47,6 +48,7 @@ export type MissionState = {
   agents: Record<string, AgentState>
   complete: boolean
   architecture_report?: any
+  pendingApprovals: ApprovalRequest[]
 }
 
 /* ------------------------------------------------------------------ */
@@ -180,7 +182,7 @@ function badgeFor(agent: string, index: number): string {
 }
 
 // Determine API URLs
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'
+export const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'
 const WS_URL = API_URL.replace(/^http/, 'ws')
 
 /* ------------------------------------------------------------------ */
@@ -194,6 +196,7 @@ export function useMissionSim(projectId?: string | null): MissionState {
     hires: [],
     agents: INITIAL_AGENTS,
     complete: false,
+    pendingApprovals: [],
   })
 
   // ---- BACKEND DRIVEN MODE ----
@@ -278,6 +281,45 @@ export function useMissionSim(projectId?: string | null): MissionState {
               setTimeout(() => {
                 loadSnapshot()
               }, 1000) // small delay to ensure backend has saved the report
+            } else if (kind === 'approval_request') {
+              // ArmorIQ is asking the user to approve/deny an agent tool call
+              next.pendingApprovals = [
+                ...(prev.pendingApprovals ?? []),
+                {
+                  approval_id: data.approval_id,
+                  agent: data.agent,
+                  tool: data.tool,
+                  intent: data.intent,
+                  risk: data.risk,
+                  reason: data.reason,
+                } as any,
+              ]
+              // Also log it so the Atlas log shows the gate
+              next.logs = [
+                ...prev.logs,
+                {
+                  id: prev.logs.length,
+                  at: relTime,
+                  level: 'armor' as const,
+                  text: `ArmorIQ — ${data.agent} requests approval to run ${data.tool} (${data.risk} risk)`,
+                },
+              ]
+            } else if (kind === 'approval_response') {
+              // Remove the resolved approval from the queue
+              next.pendingApprovals = (prev.pendingApprovals ?? []).filter(
+                (a: any) => a.approval_id !== data.approval_id,
+              )
+              // Log the outcome
+              const action = data.approved ? 'APPROVED' : 'DENIED'
+              next.logs = [
+                ...prev.logs,
+                {
+                  id: prev.logs.length,
+                  at: relTime,
+                  level: data.approved ? ('success' as const) : ('warn' as const),
+                  text: `ArmorIQ — Human ${action} ${data.tool} for ${data.agent}`,
+                },
+              ]
             }
             return next
           })
@@ -363,7 +405,7 @@ export function useMissionSim(projectId?: string | null): MissionState {
               if (atlas) agents.Atlas = { ...atlas, phase: 'done', finishedAt: ev.at }
             }
           }
-          next = { clock: elapsed, logs, hires, agents, complete, architecture_report: prev.architecture_report }
+          next = { clock: elapsed, logs, hires, agents, complete, architecture_report: prev.architecture_report, pendingApprovals: prev.pendingApprovals ?? [] }
         } else {
           next = { ...prev, clock: elapsed }
         }
