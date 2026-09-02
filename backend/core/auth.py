@@ -1,43 +1,33 @@
 """
-Auth0 ID Token verification using RS256 + JWKS.
+JWT Authentication for Mycel Operators.
 """
 
 from typing import Annotated
-
 import jwt
 from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
-from jwt import PyJWKClient
+from pydantic import BaseModel
+from datetime import datetime
 
 from .config import settings
 
-_jwks_client = PyJWKClient(
-    f"https://{settings.auth0_domain}/.well-known/jwks.json",
-    cache_keys=True,
-)
-
 _bearer_scheme = HTTPBearer()
 
+class CurrentOperator(BaseModel):
+    user_id: str
+    email: str
+    company_id: str = "mycel" # Defaulting for now
+    # Additional claims can be added here
 
 def verify_id_token(token: str) -> dict:
-    """Verify an Auth0 id_token and return the decoded payload."""
-    signing_key = _jwks_client.get_signing_key_from_jwt(token)
-    payload = jwt.decode(
-        token,
-        signing_key.key,
-        algorithms=["RS256"],
-        audience=settings.auth0_client_id,
-        issuer=f"https://{settings.auth0_domain}/",
-    )
-    return payload
-
-
-async def get_current_user(
-    credentials: HTTPAuthorizationCredentials = Depends(_bearer_scheme),
-) -> dict:
-    """FastAPI dependency: extract and verify id_token from Authorization header."""
+    """Verify an HS256 JWT token and return the decoded payload."""
     try:
-        return verify_id_token(credentials.credentials)
+        payload = jwt.decode(
+            token,
+            settings.jwt_secret_key,
+            algorithms=[settings.jwt_algorithm],
+        )
+        return payload
     except jwt.ExpiredSignatureError:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
@@ -49,5 +39,28 @@ async def get_current_user(
             detail=f"Invalid token: {e}",
         )
 
+async def get_current_user(
+    credentials: HTTPAuthorizationCredentials = Depends(_bearer_scheme),
+) -> CurrentOperator:
+    """FastAPI dependency: extract and verify JWT from Authorization header."""
+    payload = verify_id_token(credentials.credentials)
+    
+    # Map payload to CurrentOperator
+    user_id = payload.get("sub") or payload.get("user_id")
+    email = payload.get("email")
+    company_id = payload.get("company_id", "mycel")
 
-CurrentUserDep = Annotated[dict, Depends(get_current_user)]
+    if not user_id:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Token payload missing user_id/sub",
+        )
+        
+    return CurrentOperator(
+        user_id=str(user_id),
+        email=email or "",
+        company_id=company_id
+    )
+
+CurrentUserDep = Annotated[CurrentOperator, Depends(get_current_user)]
+CurrentOperatorDep = Annotated[CurrentOperator, Depends(get_current_user)]

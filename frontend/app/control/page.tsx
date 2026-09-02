@@ -1,3 +1,4 @@
+import { Suspense } from 'react'
 import { ControlRoom } from '@/components/control/control-room'
 
 export const metadata = {
@@ -5,5 +6,9 @@ export const metadata = {
 }
 
 export default function ControlPage() {
-  return <ControlRoom />
+  return (
+    <Suspense fallback={<div>Loading control room...</div>}>
+      <ControlRoom />
+    </Suspense>
+  )
 }

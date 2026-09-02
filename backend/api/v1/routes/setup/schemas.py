@@ -42,6 +42,7 @@ class SetupPayload(BaseModel):
     priorities: list[str] = Field(default_factory=list)
     constraints: list[ConstraintEntry] = Field(default_factory=list)
     files: list[str] = Field(default_factory=list)
+    is_draft: bool = False
 
 
 class SetupStatus(BaseModel):

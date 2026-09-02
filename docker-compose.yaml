@@ -21,7 +21,7 @@ services:
       - "15672:15672"
     environment:
       RABBITMQ_DEFAULT_USER: admin
-      RABBITMQ_DEFAULT_PASS: ""
+      RABBITMQ_DEFAULT_PASS: "admin"
       TZ: Asia/Kolkata
 
   # Mycel Backend API (FastAPI)

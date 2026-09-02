@@ -23,6 +23,16 @@ class ArchitectureBaseAgent(BaseAgent):
         if SEARCH_DOCUMENTS_TOOL not in self.agent_tools:
             self.agent_tools.append(SEARCH_DOCUMENTS_TOOL)
 
+    async def report_status(self, state: str, summary: str, event_type: str = "status_update", break_activity: str | None = None):
+        """Override BaseAgent.report_status to also publish events to project_events for the timeline."""
+        await super().report_status(state, summary, event_type, break_activity)
+        from core.events import event_publisher
+        await event_publisher.publish(
+            self.session_id, 
+            "log", 
+            {"level": "info" if state in ["working", "complete"] else "error", "text": summary}
+        )
+
     async def execute_tool(self, function_name: str, arguments: dict) -> Any:
         """
         Executes shared architecture tools.
@@ -47,7 +57,7 @@ class ArchitectureBaseAgent(BaseAgent):
         else:
             return f"Error: Tool '{function_name}' not recognized by ArchitectureBaseAgent."
 
-    async def run_task(self, task_description: str, model: str = "openai/gpt-oss-120b") -> str:
+    async def run_task(self, task_description: str, model: str = "qwen/qwen3.8-27b") -> str:
         await self.report_status("working", f"📐 {self.name} beginning architectural analysis...")
 
         messages = [
@@ -63,7 +73,8 @@ class ArchitectureBaseAgent(BaseAgent):
             try:
                 # ── Message Truncation (Anti-413 Payload Too Large) ──
                 if len(messages) > 8:
-                    messages = [messages[0]] + messages[-6:]
+                    # Keep system (0) and user query (1), then the last 5 messages
+                    messages = [messages[0], messages[1]] + messages[-5:]
 
                 kwargs = {
                     "model": model,

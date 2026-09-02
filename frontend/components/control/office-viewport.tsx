@@ -9,7 +9,7 @@ import { ArchitectChat } from './architect-chat'
  * Receives the full MissionState so the simulation engine inside
  * PixelOffice can drive agent movement based on log events.
  */
-export function OfficeViewport({ mission }: { mission: MissionState }) {
+export function OfficeViewport({ mission, projectId }: { mission: MissionState; projectId: string | null }) {
   const { clock, complete } = mission;
   return (
     <section
@@ -38,7 +38,7 @@ export function OfficeViewport({ mission }: { mission: MissionState }) {
         
         {/* Floating architect chatbot */}
         <div className="absolute bottom-4 right-4 z-50">
-          <ArchitectChat />
+          <ArchitectChat projectId={projectId} />
         </div>
       </div>
     </section>

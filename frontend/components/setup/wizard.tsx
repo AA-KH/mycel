@@ -4,7 +4,8 @@ import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { PixelButton, PixelChip, ProgressSquares } from '@/components/pixel/pixel-ui'
 import { PixelWorld } from '@/components/pixel/pixel-scene'
-import { fetchSetupStatus, getToken, saveSetup } from '@/lib/auth'
+import { useSearchParams } from 'next/navigation'
+import { fetchSetupStatus, getToken, saveSetup, saveDraftSetup, fetchProjectSetup } from '@/lib/auth'
 import {
   EMPTY_DATA,
   StepBudget,
@@ -42,9 +43,13 @@ type Gate =
   | { state: 'open' }
 
 export function SetupWizard() {
+  const searchParams = useSearchParams()
+  const projectId = searchParams.get('project')
+
   const [step, setStep] = useState(0)
   const [done, setDone] = useState(false)
   const [data, setData] = useState<SetupData>(EMPTY_DATA)
+  const [createdProjectId, setCreatedProjectId] = useState<string | null>(null)
   const [gate, setGate] = useState<Gate>({ state: 'checking' })
   const [saving, setSaving] = useState(false)
   const [saveError, setSaveError] = useState<string | null>(null)
@@ -59,15 +64,46 @@ export function SetupWizard() {
       return
     }
 
-    fetchSetupStatus(token).then((status) => {
+    async function init() {
+      if (projectId) {
+        const projectData = await fetchProjectSetup(token!, projectId)
+        if (!active) return
+        if (projectData) {
+          setData({ ...EMPTY_DATA, ...(projectData as Partial<SetupData>) })
+          setGate({ state: 'open' }) // Editing existing project goes straight to open
+          return
+        }
+      }
+
+      const status = await fetchSetupStatus(token!)
       if (!active) return
+      if (status.setup) {
+        setData({ ...EMPTY_DATA, ...(status.setup as Partial<SetupData>) })
+      }
       setGate({ state: status.has_setup ? 'has-network' : 'open' })
-    })
+    }
+
+    init()
 
     return () => {
       active = false
     }
-  }, [])
+  }, [projectId])
+
+  // Autosave draft when data changes
+  useEffect(() => {
+    if (gate.state !== 'open' || data === EMPTY_DATA) return
+    const token = getToken()
+    if (!token) return
+
+    const timer = setTimeout(() => {
+      saveDraftSetup(token, { ...data, is_draft: true }).catch((err) => {
+        console.error('Failed to autosave draft:', err)
+      })
+    }, 1000)
+
+    return () => clearTimeout(timer)
+  }, [data, gate.state])
 
   const update = (patch: Partial<SetupData>) => setData((d) => ({ ...d, ...patch }))
 
@@ -87,7 +123,8 @@ export function SetupWizard() {
     }
 
     try {
-      await saveSetup(token, data)
+      const response = await saveSetup(token, data)
+      setCreatedProjectId(response.project_id)
       setDone(true)
     } catch (err) {
       setSaveError(err instanceof Error ? err.message : 'Could not save your setup')
@@ -109,7 +146,7 @@ export function SetupWizard() {
   }
 
   if (done) {
-    return <DoneScreen data={data} />
+    return <DoneScreen data={data} projectId={createdProjectId} />
   }
 
   const Current = STEPS[step].component
@@ -316,7 +353,7 @@ function GateScreen({
   )
 }
 
-function DoneScreen({ data }: { data: SetupData }) {
+function DoneScreen({ data, projectId }: { data: SetupData; projectId: string | null }) {
   const topPriorities = data.priorities.slice(0, 3)
 
   return (
@@ -382,7 +419,7 @@ function DoneScreen({ data }: { data: SetupData }) {
 
             <div className="mt-6 flex flex-wrap justify-center gap-3">
               <Link
-                href="/control"
+                href={projectId ? `/control?project=${projectId}` : '/control'}
                 className="press-pulse border-2 border-foreground bg-accent px-6 py-3 font-mono text-[10px] uppercase tracking-widest text-accent-foreground hover:bg-primary hover:text-primary-foreground"
               >
                 Enter mission control

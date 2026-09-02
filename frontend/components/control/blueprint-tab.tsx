@@ -7,6 +7,7 @@ import {
   COUNCIL_DECISION,
   ROLLOUT_PHASES,
   type BlueprintNode,
+  type BlueprintStage,
 } from '@/lib/blueprint'
 import { BlueprintMap } from './blueprint-map'
 
@@ -16,8 +17,12 @@ const RISK_STYLES: Record<NonNullable<BlueprintNode['risk']>, string> = {
   high: 'bg-[#e07a4c] text-accent-foreground',
 }
 
-export function BlueprintTab({ complete }: { complete: boolean }) {
+export function BlueprintTab({ complete, architectureReport }: { complete: boolean; architectureReport?: any }) {
   const [mapOpen, setMapOpen] = useState(false)
+
+  const stages: BlueprintStage[] = architectureReport?.atlas_executive?.stages || BLUEPRINT_STAGES;
+  const decision = architectureReport?.atlas_executive?.decision || COUNCIL_DECISION;
+  const rollout = architectureReport?.atlas_executive?.rollout || ROLLOUT_PHASES;
 
   if (!complete) {
     return (
@@ -84,7 +89,7 @@ export function BlueprintTab({ complete }: { complete: boolean }) {
         {/* ---- flow diagram ---- */}
         <section aria-label="Architecture flow" className="step-enter">
           <ol className="flex flex-col">
-            {BLUEPRINT_STAGES.map((stage, i) => (
+            {stages.map((stage: any, i: number) => (
               <li key={stage.id}>
                 <div className="border-2 border-foreground bg-card pixel-shadow-sm">
                   <header className="flex items-center justify-between border-b-2 border-foreground bg-primary px-2.5 py-1.5">
@@ -98,10 +103,10 @@ export function BlueprintTab({ complete }: { complete: boolean }) {
                   <div
                     className={cn(
                       'grid gap-2 p-2.5',
-                      stage.nodes.length > 1 ? 'min-[420px]:grid-cols-2 lg:grid-cols-3' : 'grid-cols-1',
+                      stage.nodes?.length > 1 ? 'min-[420px]:grid-cols-2 lg:grid-cols-3' : 'grid-cols-1',
                     )}
                   >
-                    {stage.nodes.map((node) => (
+                    {stage.nodes?.map((node: any) => (
                       <div key={node.id} className="border-2 border-foreground bg-background p-2">
                         <div className="flex items-center justify-between gap-1.5">
                           <span className="font-mono text-[9px] uppercase tracking-wider">{node.name}</span>
@@ -112,7 +117,7 @@ export function BlueprintTab({ complete }: { complete: boolean }) {
                           ) : null}
                         </div>
                         <ul className="mt-1.5 flex flex-col gap-0.5">
-                          {node.meta.map((m) => (
+                          {node.meta?.map((m: string) => (
                             <li key={m} className="text-[10px] leading-snug text-foreground/80">
                               {m}
                             </li>
@@ -122,7 +127,7 @@ export function BlueprintTab({ complete }: { complete: boolean }) {
                           <span
                             className={cn(
                               'mt-1.5 inline-block border-2 border-foreground px-1 py-0.5 font-mono text-[7px] uppercase tracking-widest',
-                              RISK_STYLES[node.risk],
+                              RISK_STYLES[node.risk as NonNullable<BlueprintNode['risk']>],
                             )}
                           >
                             Risk {node.risk}
@@ -134,7 +139,7 @@ export function BlueprintTab({ complete }: { complete: boolean }) {
                 </div>
 
                 {/* connector arrow */}
-                {i < BLUEPRINT_STAGES.length - 1 ? (
+                {i < stages.length - 1 ? (
                   <div aria-hidden="true" className="flex flex-col items-center py-1">
                     <span className="h-3 w-1 bg-foreground" />
                     <span
@@ -158,11 +163,11 @@ export function BlueprintTab({ complete }: { complete: boolean }) {
           <dl className="flex flex-col gap-2 p-2.5">
             {(
               [
-                ['Verdict', COUNCIL_DECISION.verdict],
-                ['Allocation', COUNCIL_DECISION.allocation],
-                ['Reason', COUNCIL_DECISION.reason],
-                ['Trade-off', COUNCIL_DECISION.tradeoff],
-                ['Resilience', COUNCIL_DECISION.resilience],
+                ['Verdict', decision.verdict],
+                ['Allocation', decision.allocation],
+                ['Reason', decision.reason],
+                ['Trade-off', decision.tradeoff],
+                ['Resilience', decision.resilience],
               ] as const
             ).map(([label, value]) => (
               <div key={label}>
@@ -181,12 +186,12 @@ export function BlueprintTab({ complete }: { complete: boolean }) {
             </h3>
           </header>
           <ol className="flex flex-col">
-            {ROLLOUT_PHASES.map((p, i) => (
+            {rollout.map((p: any, i: number) => (
               <li
                 key={p.phase}
                 className={cn(
                   'flex items-center gap-2.5 px-2.5 py-2',
-                  i < ROLLOUT_PHASES.length - 1 && 'border-b-2 border-dashed border-foreground/30',
+                  i < rollout.length - 1 && 'border-b-2 border-dashed border-foreground/30',
                 )}
               >
                 <span className="shrink-0 border-2 border-foreground bg-primary px-1.5 py-0.5 font-mono text-[7px] uppercase tracking-widest text-primary-foreground">
@@ -208,7 +213,7 @@ export function BlueprintTab({ complete }: { complete: boolean }) {
 
       </div>
 
-      {mapOpen ? <BlueprintMap onClose={() => setMapOpen(false)} /> : null}
+      {mapOpen ? <BlueprintMap onClose={() => setMapOpen(false)} architectureReport={architectureReport} /> : null}
     </div>
   )
 }

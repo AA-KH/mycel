@@ -39,7 +39,7 @@ export function HireCardsTab({ hires }: { hires: HireEvent[] }) {
 
 function IdentityCard({ hire }: { hire: HireEvent }) {
   const def = getAgent(hire.agent)
-  const colors = TEAM_COLORS[hire.team]
+  const colors = TEAM_COLORS[hire.team] || { bg: 'bg-muted', text: 'text-muted-foreground', chip: 'bg-muted' }
 
   return (
     <article className="step-enter border-2 border-foreground bg-card pixel-shadow-sm">

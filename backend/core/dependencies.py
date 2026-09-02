@@ -20,3 +20,5 @@ async def get_context() -> AppContext:
 
 # Type alias for the application context dependency
 ContextDep = Annotated[AppContext, Depends(get_context)]
+
+from .auth import CurrentOperatorDep

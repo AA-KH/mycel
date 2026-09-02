@@ -12,7 +12,7 @@ from fastapi import APIRouter, HTTPException, status
 
 from core.logger import logger
 from core.mongodb import mongodb_connection
-from ..auth.deps import CurrentOperatorDep
+from core.auth import CurrentOperatorDep
 from .schemas import SetupPayload, SetupStatus
 
 router = APIRouter()
@@ -29,11 +29,13 @@ async def get_my_setup(operator: CurrentOperatorDep) -> SetupStatus:
     """Has this operator already built their network?"""
     db = _db()
     if db is None:
-        # DB down: report "no setup" so the operator can still run the wizard.
-        logger.warning("Setup lookup with no MongoDB connection")
-        return SetupStatus(has_setup=False, setup=None)
+        logger.error("Setup lookup with no MongoDB connection")
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Service unavailable. MongoDB connection is down."
+        )
 
-    record = await db[COLLECTION].find_one({"user_id": operator["id"]}, {"_id": 0})
+    record = await db[COLLECTION].find_one({"user_id": operator.user_id}, {"_id": 0})
     if not record:
         return SetupStatus(has_setup=False, setup=None)
 
@@ -52,19 +54,22 @@ async def save_my_setup(payload: SetupPayload, operator: CurrentOperatorDep) -> 
     setup = payload.model_dump()
 
     if db is None:
-        logger.warning("Setup save with no MongoDB connection — not persisted")
-        return SetupStatus(has_setup=True, setup=setup, completed_at=now)
+        logger.error("Setup save with no MongoDB connection")
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Service unavailable. MongoDB connection is down."
+        )
 
     try:
         await db[COLLECTION].update_one(
-            {"user_id": operator["id"]},
+            {"user_id": operator.user_id},
             {
                 "$set": {
-                    "user_id": operator["id"],
-                    "email": operator.get("email"),
+                    "user_id": operator.user_id,
+                    "email": operator.email,
                     "setup": setup,
-                    "completed": True,
-                    "completed_at": now,
+                    "completed": not payload.is_draft,
+                    "completed_at": now if not payload.is_draft else None,
                     "updated_at": now,
                 },
                 "$setOnInsert": {"created_at": now},
@@ -86,4 +91,9 @@ async def reset_my_setup(operator: CurrentOperatorDep) -> None:
     """Clear the operator's setup so they can rebuild from scratch."""
     db = _db()
     if db is not None:
-        await db[COLLECTION].delete_one({"user_id": operator["id"]})
+        await db[COLLECTION].delete_one({"user_id": operator.user_id})
+    else:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Service unavailable. MongoDB connection is down."
+        )

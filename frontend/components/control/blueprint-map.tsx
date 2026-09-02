@@ -9,6 +9,7 @@ import {
   findNode,
   upstreamIds,
   type BlueprintNode,
+  type BlueprintStage,
 } from '@/lib/blueprint'
 
 const RISK_STYLES: Record<NonNullable<BlueprintNode['risk']>, string> = {
@@ -19,8 +20,24 @@ const RISK_STYLES: Record<NonNullable<BlueprintNode['risk']>, string> = {
 
 type Edge = { key: string; from: string; to: string; label?: string; d: string; mx: number; my: number }
 
-export function BlueprintMap({ onClose }: { onClose: () => void }) {
-  const [selectedId, setSelectedId] = useState<string>('sup-a')
+export function BlueprintMap({ onClose, architectureReport }: { onClose: () => void; architectureReport?: any }) {
+  const stages: BlueprintStage[] = architectureReport?.atlas_executive?.stages || BLUEPRINT_STAGES;
+  const decision = architectureReport?.atlas_executive?.decision || COUNCIL_DECISION;
+
+  const dynamicNodes = useMemo(() => stages.flatMap((s: any) => s.nodes || []), [stages]);
+  const findNodeDynamic = useCallback((id: string) => dynamicNodes.find((n: any) => n.id === id), [dynamicNodes]);
+  
+  const downstreamIdsDynamic = useCallback((node: any) => {
+    if (node.flowsTo?.length) return node.flowsTo;
+    const i = stages.findIndex((s: any) => s.id === node.stage);
+    return stages[i + 1]?.nodes?.map((n: any) => n.id) ?? [];
+  }, [stages]);
+  
+  const upstreamIdsDynamic = useCallback((node: any) => {
+    return dynamicNodes.filter((n: any) => downstreamIdsDynamic(n).includes(node.id)).map((n: any) => n.id);
+  }, [dynamicNodes, downstreamIdsDynamic]);
+
+  const [selectedId, setSelectedId] = useState<string>(stages[0]?.nodes[0]?.id || 'sup-a')
   const [hoverId, setHoverId] = useState<string | null>(null)
   const [edges, setEdges] = useState<Edge[]>([])
   const [canvas, setCanvas] = useState({ w: 0, h: 0 })
@@ -29,15 +46,15 @@ export function BlueprintMap({ onClose }: { onClose: () => void }) {
   const nodeRefs = useRef(new Map<string, HTMLElement | null>())
   const closeRef = useRef<HTMLButtonElement>(null)
 
-  const selected = findNode(selectedId)
+  const selected = findNodeDynamic(selectedId)
   const activeId = hoverId ?? selectedId
 
   /** Node ids highlighted alongside the active node. */
   const related = useMemo(() => {
-    const node = findNode(activeId)
+    const node = findNodeDynamic(activeId)
     if (!node) return new Set<string>()
-    return new Set([...upstreamIds(node), ...downstreamIds(node)])
-  }, [activeId])
+    return new Set([...upstreamIdsDynamic(node), ...downstreamIdsDynamic(node)])
+  }, [activeId, findNodeDynamic, upstreamIdsDynamic, downstreamIdsDynamic])
 
   /* ---------- measure node positions and build SVG edge paths ---------- */
   const measure = useCallback(() => {
@@ -46,12 +63,12 @@ export function BlueprintMap({ onClose }: { onClose: () => void }) {
     const box = canvasEl.getBoundingClientRect()
     const next: Edge[] = []
 
-    for (const stage of BLUEPRINT_STAGES) {
-      for (const node of stage.nodes) {
+    for (const stage of stages) {
+      for (const node of stage.nodes || []) {
         const fromEl = nodeRefs.current.get(node.id)
         if (!fromEl) continue
         const a = fromEl.getBoundingClientRect()
-        for (const toId of downstreamIds(node)) {
+        for (const toId of downstreamIdsDynamic(node)) {
           const toEl = nodeRefs.current.get(toId)
           if (!toEl) continue
           const b = toEl.getBoundingClientRect()
@@ -186,7 +203,7 @@ export function BlueprintMap({ onClose }: { onClose: () => void }) {
 
               {/* node columns */}
               <div className="relative flex items-stretch gap-0">
-                {BLUEPRINT_STAGES.map((stage, si) => (
+                {stages.map((stage: any, si: number) => (
                   <div key={stage.id} className="flex items-stretch">
                     <div className="flex w-[212px] shrink-0 flex-col gap-3 sm:w-[236px]">
                       <div className="border-2 border-foreground bg-card px-2 py-1.5 pixel-shadow-sm">
@@ -204,7 +221,7 @@ export function BlueprintMap({ onClose }: { onClose: () => void }) {
                       </div>
 
                       <div className="flex flex-1 flex-col justify-center gap-4">
-                        {stage.nodes.map((node) => {
+                        {stage.nodes?.map((node: any) => {
                           const isSelected = node.id === selectedId
                           const isRelated = related.has(node.id)
                           return (
@@ -245,14 +262,16 @@ export function BlueprintMap({ onClose }: { onClose: () => void }) {
                                   {node.location}
                                 </p>
                               ) : null}
-                              <p className="mt-1.5 text-pretty text-[10px] leading-snug text-foreground/80">
-                                {node.meta[0]}
-                              </p>
+                              {node.meta?.[0] ? (
+                                <p className="mt-1.5 text-pretty text-[10px] leading-snug text-foreground/80">
+                                  {node.meta[0]}
+                                </p>
+                              ) : null}
                               {node.risk ? (
                                 <span
                                   className={cn(
                                     'mt-1.5 inline-block border-2 border-foreground px-1 font-mono text-[7px] uppercase tracking-widest',
-                                    RISK_STYLES[node.risk],
+                                    RISK_STYLES[node.risk as NonNullable<BlueprintNode['risk']>],
                                   )}
                                 >
                                   {node.risk}
@@ -265,7 +284,7 @@ export function BlueprintMap({ onClose }: { onClose: () => void }) {
                     </div>
 
                     {/* gutter the edges are drawn through */}
-                    {si < BLUEPRINT_STAGES.length - 1 ? <div className="w-16 shrink-0 sm:w-20" /> : null}
+                    {si < stages.length - 1 ? <div className="w-16 shrink-0 sm:w-20" /> : null}
                   </div>
                 ))}
               </div>
@@ -287,7 +306,7 @@ export function BlueprintMap({ onClose }: { onClose: () => void }) {
                     {selected.name}
                   </h3>
                   <p className="mt-0.5 font-mono text-[8px] uppercase tracking-widest text-secondary-foreground/80">
-                    {findStageLabel(selected.stage)}
+                    {stages.find((s: any) => s.id === selected.stage)?.label ?? selected.stage}
                     {selected.location ? ` \u00b7 ${selected.location}` : ''}
                   </p>
                 </div>
@@ -303,7 +322,7 @@ export function BlueprintMap({ onClose }: { onClose: () => void }) {
                     <section>
                       <InspectorLabel>Specification</InspectorLabel>
                       <dl className="flex flex-col divide-y-2 divide-dashed divide-foreground/25 border-2 border-foreground">
-                        {selected.detail.map((d) => (
+                        {selected.detail.map((d: any) => (
                           <div key={d.label} className="px-2 py-1.5">
                             <dt className="font-mono text-[7px] uppercase tracking-widest text-accent">{d.label}</dt>
                             <dd className="mt-0.5 text-pretty text-[11px] leading-snug">{d.value}</dd>
@@ -318,13 +337,15 @@ export function BlueprintMap({ onClose }: { onClose: () => void }) {
                     <div className="flex flex-col gap-2">
                       <ConnectionRow
                         heading="Upstream"
-                        ids={upstreamIds(selected)}
+                        ids={upstreamIdsDynamic(selected)}
+                        findNodeDynamic={findNodeDynamic}
                         onSelect={setSelectedId}
                         onHover={setHoverId}
                       />
                       <ConnectionRow
                         heading="Downstream"
-                        ids={downstreamIds(selected)}
+                        ids={downstreamIdsDynamic(selected)}
+                        findNodeDynamic={findNodeDynamic}
                         onSelect={setSelectedId}
                         onHover={setHoverId}
                       />
@@ -348,7 +369,7 @@ export function BlueprintMap({ onClose }: { onClose: () => void }) {
                   <section>
                     <InspectorLabel>Council mandate</InspectorLabel>
                     <p className="text-pretty border-2 border-foreground bg-muted/70 p-2.5 text-[11px] leading-relaxed">
-                      {COUNCIL_DECISION.allocation}
+                      {decision.allocation}
                     </p>
                   </section>
                 </div>
@@ -360,7 +381,7 @@ export function BlueprintMap({ onClose }: { onClose: () => void }) {
         {/* ---------- footer ---------- */}
         <footer className="flex shrink-0 items-center justify-between gap-2 border-t-2 border-foreground bg-muted px-3 py-2">
           <span className="font-mono text-[8px] uppercase tracking-widest text-muted-foreground">
-            {BLUEPRINT_STAGES.length} layers {'\u00b7'} {edges.length} flows {'\u00b7'} scroll to pan
+            {stages.length} layers {'\u00b7'} {edges.length} flows {'\u00b7'} scroll to pan
           </span>
           <span className="font-mono text-[8px] uppercase tracking-widest text-muted-foreground">Esc to close</span>
         </footer>
@@ -381,11 +402,13 @@ function InspectorLabel({ children }: { children: React.ReactNode }) {
 function ConnectionRow({
   heading,
   ids,
+  findNodeDynamic,
   onSelect,
   onHover,
 }: {
   heading: string
   ids: string[]
+  findNodeDynamic: (id: string) => any
   onSelect: (id: string) => void
   onHover: (id: string | null) => void
 }) {
@@ -397,7 +420,7 @@ function ConnectionRow({
       ) : (
         <ul className="flex flex-wrap gap-1.5">
           {ids.map((id) => {
-            const n = findNode(id)
+            const n = findNodeDynamic(id)
             if (!n) return null
             return (
               <li key={id}>

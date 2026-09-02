@@ -17,11 +17,6 @@ export default function WelcomePage() {
           <div className="boot-in boot-delay-1 hidden sm:block">
             <PixelChip variant="cream">Resilient Supply Chain</PixelChip>
           </div>
-          <Link href="/login" className="boot-in boot-delay-1 inline-block">
-            <PixelChip variant="navy" className="transition-colors hover:bg-accent">
-              Operator Login
-            </PixelChip>
-          </Link>
         </div>
       </header>
 

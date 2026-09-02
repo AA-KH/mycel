@@ -817,11 +817,31 @@ const FILE_TYPES = [
 
 export function StepUpload({ data, update }: StepProps) {
   const inputRef = useRef<HTMLInputElement>(null)
+  const [uploading, setUploading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
 
-  const onFiles = (files: FileList | null) => {
-    if (!files) return
-    const names = Array.from(files).map((f) => f.name)
-    update({ files: [...data.files, ...names] })
+  const onFiles = async (files: FileList | null) => {
+    if (!files || files.length === 0) return
+    setUploading(true)
+    setError(null)
+    
+    try {
+      const { getToken, uploadDocument } = await import('@/lib/auth')
+      const token = getToken()
+      if (!token) throw new Error("No session found")
+      
+      const newUrls: string[] = []
+      for (const file of Array.from(files)) {
+        const result = await uploadDocument(token, file)
+        newUrls.push(result.cloudinary_url)
+      }
+      
+      update({ files: [...data.files, ...newUrls] })
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Upload failed')
+    } finally {
+      setUploading(false)
+    }
   }
 
   return (
@@ -840,7 +860,7 @@ export function StepUpload({ data, update }: StepProps) {
         className="flex w-full flex-col items-center gap-3 border-4 border-dashed border-foreground/50 bg-card px-6 py-12 transition-colors hover:border-accent hover:bg-muted"
       >
         <span className="border-2 border-foreground bg-secondary px-4 py-2 font-mono text-[10px] uppercase tracking-widest pixel-shadow-sm">
-          + Add files
+          {uploading ? 'Uploading...' : '+ Add files'}
         </span>
         <span className="text-sm text-muted-foreground">
           Drag &amp; drop or click — CSV, Excel, PDF
@@ -868,6 +888,7 @@ export function StepUpload({ data, update }: StepProps) {
           ))}
         </div>
       </div>
+      {error && <p className="mt-3 text-sm text-destructive">{error}</p>}
       {data.files.length > 0 ? (
         <ul className="mt-5 flex flex-col gap-2">
           {data.files.map((f, i) => (

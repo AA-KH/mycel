@@ -11,7 +11,7 @@ class MayaHRAgent(ArchitectureBaseAgent):
             name=NAME,
             role=ROLE,
             system_prompt=SYSTEM_PROMPT,
-            tools=get_tools(),
+            agent_tools=get_tools(),
             session_id=session_id
         )
 
@@ -25,7 +25,7 @@ class MayaHRAgent(ArchitectureBaseAgent):
 
     async def _query_available_agents(self) -> str:
         try:
-            db = mongodb_connection.client.get_database("mycel")
+            db = mongodb_connection.db
             agents = await db.agents.find({}, {"_id": 0}).to_list(length=100)
             return json.dumps(agents, indent=2)
         except Exception as e:
