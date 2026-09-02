@@ -125,26 +125,8 @@ app.include_router(realtime_router, prefix="/api/realtime", tags=["Realtime"])
 from domains.company_builder.router import router as company_builder_router
 app.include_router(company_builder_router)
 
-# Mount Real Estate Domain Demo (both v1 and legacy routes)
-from domains.real_estate.api import router as real_estate_router, legacy_router as re_legacy_router, voicelink_stream_handler
-app.include_router(real_estate_router)
-app.include_router(re_legacy_router)
-app.add_api_websocket_route("/ws/voicelink/stream", voicelink_stream_handler)
 
-# Register Real Estate tools in the global ToolRegistry
-try:
-    from tools.registry.core import registry
-    from domains.real_estate.tools.property_search import PropertySearchTool
-    from domains.real_estate.tools.property_compare import PropertyCompareTool
-    from domains.real_estate.tools.property_legal import PropertyLegalTool
-    from domains.real_estate.tools.property_investment import PropertyInvestmentTool
-    registry.register(PropertySearchTool())
-    registry.register(PropertyCompareTool())
-    registry.register(PropertyLegalTool())
-    registry.register(PropertyInvestmentTool())
-    logger.info("Real Estate tools registered in ToolRegistry")
-except Exception as _re_err:
-    logger.error(f"Failed to register Real Estate tools: {_re_err}")
+
 
 @app.get("/", tags=["General"])
 async def root():
