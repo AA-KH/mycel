@@ -90,11 +90,17 @@ async def run_agents_in_background(project_id: str, master_prompt: str):
         hired_agent_ids = [p["agent_id"] for p in hired_personnel]
         
         try:
-            # Try to extract the JSON payload she generated via tool
-            match = re.search(r'\{.*"hired_personnel":\s*\[.*?\]\}', maya_response, re.DOTALL)
-            if match:
-                parsed = json.loads(match.group(0))
-                hired_personnel = parsed.get("hired_personnel", hired_personnel)
+            # Safest method: Extract directly from Maya's tool call execution
+            if hasattr(maya, "hired_team") and maya.hired_team:
+                hired_personnel = maya.hired_team
+                logger.info(f"Successfully extracted {len(hired_personnel)} agents directly from Maya's hire_team tool call.")
+            else:
+                # Legacy fallback: Try to extract the JSON payload she generated via tool
+                match = re.search(r'\{.*"hired_personnel":\s*\[.*?\]\}', maya_response, re.DOTALL)
+                if match:
+                    parsed = json.loads(match.group(0))
+                    hired_personnel = parsed.get("hired_personnel", hired_personnel)
+                    logger.info("Successfully extracted hired agents via regex fallback.")
         except Exception as e:
             logger.warning(f"Failed to parse Maya's output for hired personnel, defaulting to core team. Error: {e}")
             

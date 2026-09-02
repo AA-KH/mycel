@@ -6,6 +6,7 @@ from core.groq_engine import engine_manager
 from core.vector_store import MongoDBVectorStore
 from core.auth import get_current_user
 from core.logger import logger
+import json
 
 router = APIRouter()
 
@@ -40,24 +41,17 @@ async def chat_rag(request: ChatRequest, _ = Depends(get_current_user)):
         
     architecture_report = project.get("architecture_report", {})
     
-    # Condense architecture report to prevent LLM context window bloat and 429 token limits
-    import json
+    # Extract just the Atlas Executive JSON (which contains the nodes and decisions)
+    # We explicitly exclude 'expert_reports' which contains thousands of tokens of intermediate data.
     condensed_report = {}
     if architecture_report:
-        condensed_report["decision"] = architecture_report.get("decision", {})
-        condensed_report["rollout"] = architecture_report.get("rollout", [])
-        condensed_stages = []
-        for stage in architecture_report.get("stages", []):
-            nodes = stage.get("nodes", [])
-            condensed_stages.append({
-                "id": stage.get("id"),
-                "label": stage.get("label"),
-                "owner": stage.get("owner"),
-                "question": stage.get("question"),
-                "node_count": len(nodes),
-                "note": "Individual node details omitted to save context space."
-            })
-        condensed_report["stages"] = condensed_stages
+        # Check if it's the new format with atlas_executive
+        if "atlas_executive" in architecture_report:
+            condensed_report = architecture_report["atlas_executive"]
+        else:
+            condensed_report = architecture_report
+            
+        # Optional: We can still strip out massive arrays if they exist, but the Atlas JSON is usually < 1000 tokens
         
     condensed_json_str = json.dumps(condensed_report, indent=2)
     
@@ -80,7 +74,6 @@ You are helping the user understand the supply-chain architecture for their proj
 Rules:
 - Ground every answer in the blueprint and knowledge base context above.
 - If something is not covered, say so plainly.
-- Note that individual nodes have been omitted from the blueprint to save space; if asked about them, explain this limitation.
 - Keep answers concise and clear — short paragraphs or tight bullet lists. No markdown headings.
 - Stay in character as the mission's architect assistant.
 """

@@ -14,6 +14,7 @@ class MayaHRAgent(ArchitectureBaseAgent):
             agent_tools=get_tools(),
             session_id=session_id
         )
+        self.hired_team = None
 
     async def execute_tool(self, tool_name: str, kwargs: dict) -> str:
         if tool_name == "query_available_agents":
@@ -32,7 +33,8 @@ class MayaHRAgent(ArchitectureBaseAgent):
             return f"Error fetching agents from DB: {str(e)}"
 
     async def _hire_team(self, hired_personnel: list, reasoning: str) -> str:
-        # In a real system, this would perhaps save the hired team to the database or context
+        # Save it to the instance so project.py can read it directly without regex parsing
+        self.hired_team = hired_personnel
         return json.dumps({
             "status": "success",
             "hired_personnel": hired_personnel,

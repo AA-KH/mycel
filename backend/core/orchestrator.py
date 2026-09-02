@@ -139,7 +139,7 @@ Output ONLY the JSON. No markdown backticks, no commentary.
             # We use Llama 3 8B instead of Qwen 27B for JSON mode to save tokens and avoid 413, or use qwen directly
             # The prompt is now much shorter due to truncation
             response = await engine_manager.chat_completion(
-                model="llama3-8b-8192", 
+                model="qwen/qwen3.8-27b", 
                 messages=[
                     {"role": "system", "content": "You are Atlas, the Master Orchestrator. Output ONLY valid JSON."},
                     {"role": "user", "content": atlas_prompt}

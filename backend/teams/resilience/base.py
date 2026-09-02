@@ -152,10 +152,11 @@ class ResilienceBaseAgent(BaseAgent):
                 error_msg = str(e)
                 
                 if "Tool call validation failed" in error_msg or "tool_use_failed" in error_msg:
-                    logger.warning(f"[{self.name}] Tool hallucination detected. Auto-healing... Error: {error_msg}")
+                    truncated_error = error_msg[:200] + "...(truncated)" if len(error_msg) > 200 else error_msg
+                    logger.warning(f"[{self.name}] Tool hallucination detected. Auto-healing... Error: {truncated_error}")
                     messages.append({
                         "role": "user",
-                        "content": f"System Error: {error_msg}. You attempted to call an invalid tool name or format. DO NOT append '<|channel|>commentary' or any other suffix. Use the EXACT tool name provided."
+                        "content": f"System Error: {truncated_error}. You attempted to call an invalid tool name or format. DO NOT append '<|channel|>commentary' or any other suffix. Use the EXACT tool name provided."
                     })
                     continue
                     
