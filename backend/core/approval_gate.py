@@ -164,7 +164,11 @@ def _get_session(session_id: str, agent_name: str) -> Optional[Any]:
     if not client:
         return None
     try:
-        opts = SessionOptions(llm=agent_name, mode="sdk")
+        opts = SessionOptions(
+            llm=agent_name, 
+            mode="sdk",
+            default_mcp_name="mycel"  # Required by ArmorIQ SDK for tools without __ namespaces
+        )
         session = client.start_session(opts)
         _sessions[key] = session
         logger.debug(f"[ArmorIQ] New session for {agent_name} in project {session_id}")
