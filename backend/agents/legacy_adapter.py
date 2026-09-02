@@ -128,7 +128,7 @@ class AgentRuntimeAdapter(BaseAgent):
             artifact_manager=NoOpArtifactManager()
         )
 
-    async def run_task(self, task_description: str, model: str = "qwen/qwen3.8-27b"):
+    async def run_task(self, task_description: str, model: str = "openai/gpt-oss-120b"):
         """
         Overrides the BaseAgent run_task to use the Phase 4 AgentRuntime.
         """

@@ -244,7 +244,7 @@ async def _generate_response(
 
     try:
         response = await engine_manager.chat_completion(
-            model="qwen/qwen3.8-27b",
+            model="openai/gpt-oss-120b",
             messages=[system_msg] + history_msgs + [user_msg],
             temperature=0.3,
             max_tokens=512,
@@ -294,7 +294,7 @@ class RealEstateRouter:
 
         try:
             response = await engine_manager.chat_completion(
-                model="qwen/qwen3.8-27b",
+                model="openai/gpt-oss-120b",
                 messages=messages,
                 temperature=0.0,
                 max_tokens=256,

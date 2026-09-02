@@ -69,7 +69,7 @@ class CoderAgent(BaseAgent):
         )
         self.task_id = task_id
 
-    async def run_task(self, task_description: str, model: str = "qwen/qwen3.8-27b"):
+    async def run_task(self, task_description: str, model: str = "openai/gpt-oss-120b"):
         if "website" in task_description.lower() or "landing page" in task_description.lower() or "ui" in task_description.lower():
             await self.report_status("working", "Executing Website Generation using Builder.io Provider...")
             from tools.gateway import CoreToolGateway

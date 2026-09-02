@@ -70,7 +70,7 @@ class BaseAgent:
         except Exception as e:
             logger.error(f"Failed to report status: {e}")
 
-    async def run_task(self, task_description: str, model: str = "qwen/qwen3.8-27b"):
+    async def run_task(self, task_description: str, model: str = "openai/gpt-oss-120b"):
         """Execute a task using the Groq LLM with failover engine"""
 
         await self.report_status("working", f"Thinking about: {task_description[:50]}...")

@@ -86,7 +86,7 @@ Rules:
     # 5. Call LLM
     try:
         response = await engine_manager.chat_completion(
-            model="qwen/qwen3.8-27b",  # Organization's standard model on Groq
+            model="openai/gpt-oss-120b",  # Organization's standard model on Groq
             messages=groq_messages,
             team_id="atlas"  # Use Atlas's keys since it's the architect
         )

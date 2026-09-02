@@ -66,7 +66,7 @@ class ArchitectureBaseAgent(BaseAgent):
         else:
             return f"Error: Tool '{function_name}' not recognized by ArchitectureBaseAgent."
 
-    async def run_task(self, task_description: str, model: str = "qwen/qwen3.8-27b") -> str:
+    async def run_task(self, task_description: str, model: str = "openai/gpt-oss-120b") -> str:
         await self.report_status("working", f"📐 {self.name} beginning architectural analysis...")
 
         messages = [

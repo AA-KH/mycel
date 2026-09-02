@@ -51,7 +51,7 @@ class HiringRequirementBuilder:
         
         try:
             response = await groq_engine.chat_completion(
-                model="qwen/qwen3.8-27b",
+                model="openai/gpt-oss-120b",
                 messages=messages,
                 temperature=0.1,
             )
