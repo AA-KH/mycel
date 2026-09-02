@@ -53,6 +53,12 @@ export type MissionState = {
   /** true when running the scripted marketing timeline (no backend project) */
   demo?: boolean
   pendingApprovals: ApprovalRequest[]
+  crisisAlert?: {
+    title: string
+    severity: string
+    description: string
+    timestamp: string
+  }
 }
 
 /* ------------------------------------------------------------------ */
@@ -370,6 +376,24 @@ export function useMissionSim(projectId?: string | null): MissionState {
                   level: data.approved ? ('success' as const) : ('warn' as const),
                   text: `ArmorIQ — Human ${action} ${data.tool} for ${data.agent}`,
                 },
+              ]
+            } else if (kind === 'crisis_alert') {
+              next.crisisAlert = {
+                title: data.title,
+                severity: data.severity,
+                description: data.description,
+                timestamp: data.timestamp
+              }
+              next.logs = [
+                ...prev.logs,
+                { id: prev.logs.length, at: relTime, level: 'warn' as const, text: `MONITOR ALERT: ${data.title} - Autonomous re-architecture initiated.` }
+              ]
+            } else if (kind === 'crisis_resolved') {
+              next.crisisAlert = undefined
+              next.architecture_report = data.report
+              next.logs = [
+                ...prev.logs,
+                { id: prev.logs.length, at: relTime, level: 'success' as const, text: `CRISIS RESOLVED: New architecture compiled.` }
               ]
             }
             return next

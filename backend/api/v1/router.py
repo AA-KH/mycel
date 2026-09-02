@@ -6,7 +6,7 @@ Consolidates all v1 specific endpoints.
 from fastapi import APIRouter, Depends
 from core.auth import get_current_user
 from .routes import health, employees, chat
-from .routes import companies, departments, teams, positions, skills, tools, knowledge, reasoning, pipelines, stage_definitions, quality, outputs, intelligence, network, resilience, council, project, agents, documents
+from .routes import companies, departments, teams, positions, skills, tools, knowledge, reasoning, pipelines, stage_definitions, quality, outputs, intelligence, network, resilience, council, project, agents, documents, monitor
 
 router = APIRouter()
 
@@ -36,6 +36,9 @@ router.include_router(intelligence.router, tags=["Intelligence Team"], dependenc
 router.include_router(network.router, tags=["Network Team"], dependencies=protected_deps)
 router.include_router(resilience.router, tags=["Resilience Team"], dependencies=protected_deps)
 router.include_router(council.router, tags=["Council Team"], dependencies=protected_deps)
+
+# Webhook for monitoring subsystem
+router.include_router(monitor.router, prefix="/monitor", tags=["Monitor Integration"])
 
 # Real-time WebSocket and broadcast
 from .routes.realtime import router as realtime_router

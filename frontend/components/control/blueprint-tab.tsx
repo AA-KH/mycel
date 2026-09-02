@@ -145,6 +145,36 @@ export function BlueprintTab({
           </span>
         </button>
 
+        {/* ---- CRISIS IMPACT & DELTA ---- */}
+        {atlas?.crisis_impact ? (
+          <section aria-label="Crisis Impact" className="mb-4 border-2 border-destructive bg-destructive/10 pixel-shadow-sm animate-in fade-in slide-in-from-top-2 duration-500">
+            <header className="border-b-2 border-destructive bg-destructive px-2.5 py-1.5 flex items-center gap-2">
+              <span className="h-2 w-2 rounded-full bg-white animate-pulse"></span>
+              <h3 className="font-mono text-[11px] uppercase tracking-widest text-destructive-foreground">
+                Crisis Resolution & Impact Analysis
+              </h3>
+            </header>
+            <div className="p-3 grid gap-3">
+              <div className="flex flex-col gap-1">
+                <span className="font-mono text-[9px] uppercase tracking-widest text-destructive">Estimated Profit Loss</span>
+                <span className="font-mono text-xl text-foreground font-bold">{atlas.crisis_impact.profit_loss_estimate}</span>
+              </div>
+              <div className="flex flex-col gap-1">
+                <span className="font-mono text-[9px] uppercase tracking-widest text-destructive">Disaster Mitigated</span>
+                <span className="text-sm text-foreground/90">{atlas.crisis_impact.risk_mitigated}</span>
+              </div>
+              <div className="flex flex-col gap-1">
+                <span className="font-mono text-[9px] uppercase tracking-widest text-destructive">Architectural Changes</span>
+                <ul className="list-disc list-inside text-sm text-foreground/90 space-y-1">
+                  {atlas.crisis_impact.architectural_changes?.map((change: string, idx: number) => (
+                    <li key={idx} className="break-words">{change}</li>
+                  ))}
+                </ul>
+              </div>
+            </div>
+          </section>
+        ) : null}
+
         {/* ---- flow diagram ---- */}
         <section aria-label="Architecture flow" className="step-enter">
           <ol className="flex flex-col">

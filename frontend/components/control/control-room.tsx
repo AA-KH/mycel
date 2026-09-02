@@ -63,6 +63,24 @@ export function ControlRoom() {
         </div>
       </header>
 
+      {/* CRISIS ALERT BANNER */}
+      {mission.crisisAlert && (
+        <div className="bg-destructive text-destructive-foreground px-4 py-3 flex items-center justify-between border-b-4 border-foreground animate-pulse">
+          <div className="flex items-center gap-3">
+            <span className="font-mono font-bold uppercase tracking-widest text-sm flex items-center gap-2">
+              <span className="h-2 w-2 bg-white rounded-full"></span>
+              CRITICAL MONITOR ALERT
+            </span>
+            <span className="font-mono text-xs opacity-90 border-l-2 border-foreground/30 pl-3">
+              {mission.crisisAlert.title}
+            </span>
+          </div>
+          <div className="font-mono text-[10px] uppercase bg-black/20 px-2 py-1">
+            Status: Autonomous Re-Architecture Initiated
+          </div>
+        </div>
+      )}
+
       {/* main split: office viewport + command center */}
       <div className="grid min-h-0 flex-1 grid-cols-1 gap-4 p-4 lg:grid-cols-[minmax(0,1fr)_minmax(360px,480px)] md:p-5">
         <div className="min-h-0 max-lg:h-[42svh]">
