@@ -139,6 +139,16 @@ class CouncilBaseAgent(BaseAgent):
 
     async def execute_tool(self, function_name: str, arguments: dict) -> str:
         """Shared Council tool execution — delegates shared tools here."""
+        from core.approval_gate import gate_tool_call
+        allowed = await gate_tool_call(
+            session_id=self.session_id or "unknown",
+            agent_name=self.name,
+            tool_name=function_name,
+            arguments=arguments,
+        )
+        if not allowed:
+            return f"[BLOCKED by ArmorIQ] Tool '{function_name}' was denied. Agent must proceed without this data."
+
         if function_name == "score_vendor_contract_risk":
             return await score_vendor_contract_risk(
                 arguments.get("vendor_name", ""),

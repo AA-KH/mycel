@@ -31,6 +31,16 @@ class ResilienceBaseAgent(BaseAgent):
         
     async def execute_tool(self, function_name: str, arguments: dict) -> str:
         """Shared tool execution hook for Resilience Agents."""
+        from core.approval_gate import gate_tool_call
+        allowed = await gate_tool_call(
+            session_id=self.session_id or "unknown",
+            agent_name=self.name,
+            tool_name=function_name,
+            arguments=arguments,
+        )
+        if not allowed:
+            return f"[BLOCKED by ArmorIQ] Tool '{function_name}' was denied. Agent must proceed without this data."
+
         if function_name == "calculate_financial_impact":
             return await calculate_financial_impact(
                 arguments.get("downtime_days", 0),

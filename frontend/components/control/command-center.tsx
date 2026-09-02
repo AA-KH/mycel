@@ -8,6 +8,7 @@ import { AtlasLogTab } from './atlas-log'
 import { HireCardsTab } from './hire-cards'
 import { AgentRosterTab } from './agent-roster'
 import { BlueprintTab } from './blueprint-tab'
+import { ApprovalModal } from './approval-modal'
 
 type TabId = 'atlas' | 'hires' | 'agents' | 'blueprint'
 
@@ -32,8 +33,16 @@ export function CommandCenter({ mission, projectId }: { mission: MissionState; p
 
   const hiredCount = mission.hires.length
   const workingCount = Object.values(mission.agents).filter((a) => a.phase === 'working').length
+  const pendingApprovals = mission.pendingApprovals ?? []
+  const topApproval = pendingApprovals[0] ?? null
+
+  function dismissApproval(_approval_id: string) {
+    // The WS approval_response event automatically removes it from state.
+    // Nothing needed here — the modal already called the backend.
+  }
 
   return (
+    <>
     <section
       aria-label="Command center"
       className="flex h-full min-h-0 flex-col border-4 border-foreground bg-card pixel-shadow"
@@ -136,5 +145,14 @@ export function CommandCenter({ mission, projectId }: { mission: MissionState; p
         </div>
       </div>
     </section>
+
+    {/* ArmorIQ approval modal — renders above everything when gating is active */}
+    {topApproval ? (
+      <ApprovalModal
+        request={topApproval}
+        onResolved={dismissApproval}
+      />
+    ) : null}
+    </>
   )
 }

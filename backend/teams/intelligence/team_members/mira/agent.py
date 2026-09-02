@@ -75,7 +75,17 @@ class MiraAgent(IntelligenceBaseAgent):
         self.task_id = task_id
 
     async def execute_tool(self, function_name: str, arguments: dict) -> str:
-        # Check Mira's specific tools first
+        # Check ArmorIQ Gate for Mira's specific tools!
+        from core.approval_gate import gate_tool_call
+        allowed = await gate_tool_call(
+            session_id=self.session_id or "unknown",
+            agent_name=self.name,
+            tool_name=function_name,
+            arguments=arguments,
+        )
+        if not allowed:
+            return f"[BLOCKED by ArmorIQ] Tool '{function_name}' was denied. Agent must proceed without this data."
+
         if function_name == "fetch_trend_data":
             return await fetch_trend_data(arguments.get("keyword", ""))
         elif function_name == "get_economic_indicators":

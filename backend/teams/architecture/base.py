@@ -39,6 +39,16 @@ class ArchitectureBaseAgent(BaseAgent):
         Child classes can override this to implement member-specific tools.
         """
         from .shared_tools import generate_mermaid_graph, validate_json_schema
+        from core.approval_gate import gate_tool_call
+
+        allowed = await gate_tool_call(
+            session_id=self.session_id or "unknown",
+            agent_name=self.name,
+            tool_name=function_name,
+            arguments=arguments,
+        )
+        if not allowed:
+            return f"[BLOCKED by ArmorIQ] Tool '{function_name}' was denied. Agent must proceed without this data."
 
         if function_name == "generate_mermaid_graph":
             return await generate_mermaid_graph(

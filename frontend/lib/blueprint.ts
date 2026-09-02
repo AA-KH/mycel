@@ -11,11 +11,11 @@ export type BlueprintNode = {
   meta: string[]
   share?: string
   risk?: 'low' | 'medium' | 'high'
-  /** Short geography label shown on the network map. */
+
   location?: string
-  /** One-line summary of the node's function in the network. */
+
   function?: string
-  /** Structured spec sheet shown when the node is selected on the map. */
+
   detail?: { label: string; value: string }[]
   /** Fallback plan if this node degrades or fails. */
   fallback?: string

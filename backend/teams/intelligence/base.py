@@ -66,6 +66,16 @@ class IntelligenceBaseAgent(BaseAgent):
         
     # Hook for child classes to execute their specific tools.
     async def execute_tool(self, function_name: str, arguments: dict) -> str:
+        from core.approval_gate import gate_tool_call
+        allowed = await gate_tool_call(
+            session_id=self.session_id or "unknown",
+            agent_name=self.name,
+            tool_name=function_name,
+            arguments=arguments,
+        )
+        if not allowed:
+            return f"[BLOCKED by ArmorIQ] Tool '{function_name}' was denied. Agent must proceed without this data."
+
         if function_name == "web_search":
             return await web_search(arguments.get("query", ""))
         elif function_name == "web_scrape":

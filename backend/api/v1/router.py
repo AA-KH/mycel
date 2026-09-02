@@ -41,5 +41,9 @@ router.include_router(council.router, tags=["Council Team"], dependencies=protec
 from .routes.realtime import router as realtime_router
 router.include_router(realtime_router, prefix="/realtime", tags=["Realtime"])
 
+# ArmorIQ Human-in-the-Loop approval endpoint
+from .routes.realtime.approvals import router as approvals_router
+router.include_router(approvals_router, prefix="/realtime", tags=["ArmorIQ"])
+
 # Chat / RAG
 router.include_router(chat.router, prefix="/chat", tags=["Chat"])
