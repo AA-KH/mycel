@@ -21,8 +21,10 @@ const RISK_STYLES: Record<NonNullable<BlueprintNode['risk']>, string> = {
 type Edge = { key: string; from: string; to: string; label?: string; d: string; mx: number; my: number }
 
 export function BlueprintMap({ onClose, architectureReport }: { onClose: () => void; architectureReport?: any }) {
-  const stages: BlueprintStage[] = architectureReport?.atlas_executive?.stages || BLUEPRINT_STAGES;
-  const decision = architectureReport?.atlas_executive?.decision || COUNCIL_DECISION;
+  const atlas = architectureReport?.atlas_executive
+  const isLive = Array.isArray(atlas?.stages) && atlas.stages.length > 0
+  const stages: BlueprintStage[] = isLive ? atlas.stages : BLUEPRINT_STAGES
+  const decision = isLive && atlas.decision ? atlas.decision : COUNCIL_DECISION
 
   const dynamicNodes = useMemo(() => stages.flatMap((s: any) => s.nodes || []), [stages]);
   const findNodeDynamic = useCallback((id: string) => dynamicNodes.find((n: any) => n.id === id), [dynamicNodes]);
@@ -37,7 +39,7 @@ export function BlueprintMap({ onClose, architectureReport }: { onClose: () => v
     return dynamicNodes.filter((n: any) => downstreamIdsDynamic(n).includes(node.id)).map((n: any) => n.id);
   }, [dynamicNodes, downstreamIdsDynamic]);
 
-  const [selectedId, setSelectedId] = useState<string>(stages[0]?.nodes[0]?.id || 'sup-a')
+  const [selectedId, setSelectedId] = useState<string>(dynamicNodes[0]?.id || 'sup-a')
   const [hoverId, setHoverId] = useState<string | null>(null)
   const [edges, setEdges] = useState<Edge[]>([])
   const [canvas, setCanvas] = useState({ w: 0, h: 0 })
@@ -86,7 +88,7 @@ export function BlueprintMap({ onClose, architectureReport }: { onClose: () => v
 
     setEdges(next)
     setCanvas({ w: canvasEl.scrollWidth, h: canvasEl.scrollHeight })
-  }, [])
+  }, [stages, downstreamIdsDynamic])
 
   useLayoutEffect(() => {
     measure()
