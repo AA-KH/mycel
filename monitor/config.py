@@ -29,7 +29,7 @@ class MonitorConfig(BaseSettings):
 
     # ── LLM ──
     llm_provider: str = "groq"  # groq, openai, google
-    llm_model: str = "llama-3.3-70b-versatile"
+    llm_model: str = "openai/gpt-oss-120b"
     llm_api_key: Optional[str] = Field(default=None, alias="GROQ_API_KEY")
     llm_api_key_fallback: Optional[str] = Field(default=None, alias="GROQ_API_KEY_2")
     llm_max_tokens: int = 1024
