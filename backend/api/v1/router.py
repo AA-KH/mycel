@@ -13,6 +13,10 @@ router = APIRouter()
 # Register v1 routes
 router.include_router(health.router, tags=["System"])
 
+# Auth Router
+from .routes.auth import router as auth_router
+router.include_router(auth_router, prefix="/auth", tags=["Auth"])
+
 protected_deps = [Depends(get_current_user)]
 
 router.include_router(agents.router, prefix="/agents", tags=["Agents"], dependencies=protected_deps)

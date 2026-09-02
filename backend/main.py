@@ -113,7 +113,8 @@ from api.wallet_router import router as wallet_router
 app.include_router(wallet_router, prefix="/api/wallet", tags=["Wallet Cards"])
 from api.v1.routes.auth.router import router as auth_router
 app.include_router(auth_router, prefix="/api/auth", tags=["Auth"])
-from api.v1.routes.setup import router as setup_router
+
+from api.v1.routes.setup.router import router as setup_router
 app.include_router(setup_router, prefix="/api/setup", tags=["Operator Setup"])
 
 # Mount realtime WebSocket + broadcast at /api/realtime
