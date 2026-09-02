@@ -126,7 +126,12 @@ export function CommandCenter({ mission }: { mission: MissionState }) {
           hidden={tab !== 'blueprint'}
           className="h-full"
         >
-          <BlueprintTab complete={mission.complete} architectureReport={mission.architecture_report} />
+          <BlueprintTab
+            complete={mission.complete}
+            architectureReport={mission.architecture_report}
+            loadingReport={mission.loadingReport}
+            demo={mission.demo}
+          />
         </div>
       </div>
     </section>
