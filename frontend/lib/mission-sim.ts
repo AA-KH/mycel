@@ -48,6 +48,10 @@ export type MissionState = {
   agents: Record<string, AgentState>
   complete: boolean
   architecture_report?: any
+  /** true while the mission is complete but the Atlas report has not been fetched yet */
+  loadingReport?: boolean
+  /** true when running the scripted marketing timeline (no backend project) */
+  demo?: boolean
   pendingApprovals: ApprovalRequest[]
 }
 
@@ -205,29 +209,76 @@ export function useMissionSim(projectId?: string | null): MissionState {
 
     let active = true
     let ws: WebSocket | null = null
+    let reportTimer: ReturnType<typeof setTimeout> | null = null
+
+    async function fetchSnapshot(): Promise<MissionState | null> {
+      const token = getToken()
+      const res = await fetch(`${API_URL}/api/v1/realtime/snapshot/${projectId}`, {
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+        cache: 'no-store',
+      })
+      if (!res.ok) {
+        console.error('Snapshot load failed:', res.status, res.statusText)
+        try {
+          const errorText = await res.text()
+          console.error('Snapshot error details:', errorText)
+        } catch (e) {}
+        throw new Error('Failed to load snapshot')
+      }
+      const data = await res.json()
+      if (!data || data.error) return null
+      return data as MissionState
+    }
 
     async function loadSnapshot() {
       try {
-        const token = getToken()
-        const res = await fetch(`${API_URL}/api/v1/realtime/snapshot/${projectId}`, {
-          headers: token ? { Authorization: `Bearer ${token}` } : {}
+        const data = await fetchSnapshot()
+        if (!active || !data) return
+        setState({
+          ...data,
+          loadingReport: Boolean(data.complete) && !data.architecture_report,
         })
-        if (!res.ok) {
-          console.error('Snapshot load failed:', res.status, res.statusText)
-          try {
-            const errorText = await res.text()
-            console.error('Snapshot error details:', errorText)
-          } catch (e) {}
-          throw new Error('Failed to load snapshot')
-        }
-        const data = await res.json()
-        if (!active) return
-        if (data && !data.error) {
-          setState(data)
-        }
+        if (data.complete && !data.architecture_report) scheduleReportFetch(0)
       } catch (err) {
-        console.error("Failed to load project snapshot:", err)
+        console.error('Failed to load project snapshot:', err)
       }
+    }
+
+    /**
+     * Once the backend emits `complete`, the architecture_report is already saved,
+     * but a single delayed fetch can still race the DB write or fail transiently.
+     * Retry with backoff until the report lands (or we give up) so the Blueprint
+     * tab shows Atlas' real output instead of silently falling back to sample data.
+     */
+    function scheduleReportFetch(attempt: number) {
+      const MAX_ATTEMPTS = 8
+      if (!active || attempt >= MAX_ATTEMPTS) {
+        if (active) setState((prev) => ({ ...prev, loadingReport: false }))
+        return
+      }
+      const delay = attempt === 0 ? 500 : Math.min(1000 * 2 ** (attempt - 1), 8000)
+      reportTimer = setTimeout(async () => {
+        try {
+          const data = await fetchSnapshot()
+          if (!active) return
+          if (data?.architecture_report) {
+            // Only patch the report + completion flags — keep the WS-accumulated
+            // logs/agents so the feed does not flicker or lose ordering.
+            setState((prev) => ({
+              ...prev,
+              complete: true,
+              architecture_report: data.architecture_report,
+              loadingReport: false,
+              logs: data.logs?.length >= prev.logs.length ? data.logs : prev.logs,
+              agents: { ...prev.agents, ...data.agents },
+            }))
+            return
+          }
+        } catch (err) {
+          console.error('Architecture report fetch failed:', err)
+        }
+        scheduleReportFetch(attempt + 1)
+      }, delay)
     }
 
     loadSnapshot().then(() => {
@@ -323,6 +374,11 @@ export function useMissionSim(projectId?: string | null): MissionState {
             }
             return next
           })
+
+          if (kind === 'complete') {
+            // Pull the saved architecture_report (with retries) now that the backend is done.
+            scheduleReportFetch(0)
+          }
         } catch (err) {
           console.error("WS parse error", err)
         }
@@ -338,6 +394,7 @@ export function useMissionSim(projectId?: string | null): MissionState {
     return () => {
       active = false
       if (ws) ws.close()
+      if (reportTimer) clearTimeout(reportTimer)
       clearInterval(timer)
     }
   }, [projectId])
@@ -351,6 +408,7 @@ export function useMissionSim(projectId?: string | null): MissionState {
     if (projectId) return // Disable mock if real project
 
     startRef.current = performance.now()
+    setState((prev) => ({ ...prev, demo: true }))
 
     const tick = () => {
       const start = startRef.current
