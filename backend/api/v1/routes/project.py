@@ -110,12 +110,11 @@ async def run_agents_in_background(project_id: str, master_prompt: str):
                 "mandate": p.get("mandate", "Task assignment pending")
             })
 
-        # 2. Architecture Phase
-        # Instantiate a dedicated ArchitectureTeam for this project to maintain isolated logs/session_id
-        from teams.architecture.team import ArchitectureTeam
-        project_architecture_team = ArchitectureTeam(session_id=project_id)
+        # 2. Global Execution Phase
+        from core.orchestrator import MasterOrchestrator
+        orchestrator = MasterOrchestrator(session_id=project_id)
         
-        report = await project_architecture_team.run_architecture_review(master_prompt, hired_agent_ids)
+        report = await orchestrator.run_project_analysis(master_prompt, hired_personnel)
         
         # Save final report to MongoDB
         await db.projects.update_one(
@@ -127,7 +126,7 @@ async def run_agents_in_background(project_id: str, master_prompt: str):
             }}
         )
         await event_publisher.publish(project_id, "complete", {})
-        logger.info(f"Successfully completed architecture review for project {project_id}")
+        logger.info(f"Successfully completed global architecture review for project {project_id}")
     except Exception as e:
         logger.error(f"Failed background architecture review for {project_id}: {str(e)}")
         db = mongodb_connection.db
