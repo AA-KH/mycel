@@ -34,7 +34,7 @@ export function AgentRosterTab({
               <section key={team}>
                 <h3
                   className={cn(
-                    'mb-1.5 inline-block border-2 border-foreground px-2 py-0.5 font-mono text-[8px] uppercase tracking-widest',
+                    'mb-1.5 inline-block border-2 border-foreground px-2 py-0.5 font-mono text-[10px] uppercase tracking-widest',
                     TEAM_COLORS[team].bg,
                     TEAM_COLORS[team].text,
                   )}
@@ -110,24 +110,24 @@ function AgentRow({
       />
       <div className="min-w-0 flex-1">
         <div className="flex items-baseline gap-2">
-          <span className="font-mono text-[10px] uppercase tracking-wider">{name}</span>
-          <span className="truncate text-[10px] text-muted-foreground">{role}</span>
+          <span className="font-mono text-[12px] uppercase tracking-wider text-foreground">{name}</span>
+          <span className="truncate text-[11px] text-foreground/90">{role}</span>
         </div>
         {state && phase !== 'standby' && phase !== 'hired' ? (
-          <p className="mt-0.5 truncate text-[10px] leading-snug text-foreground/80">{state.task}</p>
+          <p className="mt-0.5 truncate text-[12px] leading-snug text-foreground">{state.task}</p>
         ) : null}
       </div>
       <div className="flex shrink-0 flex-col items-end gap-0.5">
         <span
           className={cn(
-            'border-2 border-foreground px-1.5 py-0.5 font-mono text-[7px] uppercase tracking-widest',
+            'border-2 border-foreground px-1.5 py-0.5 font-mono text-[9px] uppercase tracking-widest',
             phaseStyles[phase],
           )}
         >
           {phaseLabel[phase]}
         </span>
         {elapsed ? (
-          <span className="font-mono text-[8px] tabular-nums tracking-wider text-muted-foreground">{elapsed}</span>
+          <span className="font-mono text-[10px] tabular-nums tracking-wider text-foreground/90">{elapsed}</span>
         ) : null}
       </div>
     </li>
