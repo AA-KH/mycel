@@ -77,4 +77,4 @@ class EthanAgent(ArchitectureBaseAgent):
             })
             
         else:
-            return f"Error: Tool '{function_name}' not recognized by EthanAgent."
+            return await super().execute_tool(function_name, arguments)

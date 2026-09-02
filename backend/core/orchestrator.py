@@ -43,13 +43,21 @@ class MasterOrchestrator:
         accumulated_context = f"INITIAL PROJECT PROMPT:\n{master_prompt}\n"
         raw_reports = {}
         
+        def truncate_report(report: str, max_chars=800) -> str:
+            if not isinstance(report, str):
+                report = str(report)
+            if len(report) > max_chars:
+                return report[:max_chars] + "...[TRUNCATED to save context]"
+            return report
+        
         # --- PHASE 1: Research & Discovery ---
         if phase1_agents:
             logger.info("🟢 [PHASE 1] Running Research & Discovery (Intelligence, Council, Network)...")
             p1_results = await self._run_phase(phase1_agents, accumulated_context)
             accumulated_context += "\n--- PHASE 1 (RESEARCH) REPORTS ---\n"
             for name, report in p1_results.items():
-                accumulated_context += f"[{name.upper()}] REPORT:\n{report}\n\n"
+                condensed = truncate_report(report)
+                accumulated_context += f"[{name.upper()}] REPORT:\n{condensed}\n\n"
                 raw_reports[name.lower()] = report
                 
         # --- PHASE 2: Drafting ---
@@ -59,7 +67,8 @@ class MasterOrchestrator:
             p2_results = await self._run_phase(phase2_agents, p2_prompt)
             accumulated_context += "\n--- PHASE 2 (DRAFTING) REPORTS ---\n"
             for name, report in p2_results.items():
-                accumulated_context += f"[{name.upper()}] DRAFT:\n{report}\n\n"
+                condensed = truncate_report(report)
+                accumulated_context += f"[{name.upper()}] DRAFT:\n{condensed}\n\n"
                 raw_reports[name.lower()] = report
                 
         # --- PHASE 3: Validation & Red-Teaming ---
@@ -69,13 +78,12 @@ class MasterOrchestrator:
             p3_results = await self._run_phase(phase3_agents, p3_prompt)
             accumulated_context += "\n--- PHASE 3 (VALIDATION) REPORTS ---\n"
             for name, report in p3_results.items():
-                accumulated_context += f"[{name.upper()}] CRITIQUE:\n{report}\n\n"
+                condensed = truncate_report(report)
+                accumulated_context += f"[{name.upper()}] CRITIQUE:\n{condensed}\n\n"
                 raw_reports[name.lower()] = report
                 
         # --- PHASE 4: Master Synthesis (Atlas) ---
         logger.info("🔵 [PHASE 4] Atlas synthesizing global reports...")
-        
-        atlas = AtlasAgent(session_id=self.session_id)
         
         atlas_prompt = f"""
 The Global Task Force has completed its multi-phase analysis. Here is the entire contextual history:
@@ -124,10 +132,25 @@ Output ONLY the JSON. No markdown backticks, no commentary.
 """
         
         await event_publisher.publish(self.session_id, "start", {"agent": "Atlas", "task": "Synthesizing executive blueprint from all teams"})
+        
+        # Bypass Agent loop to avoid tool hallucination and enforce JSON output
+        from core.groq_engine import engine_manager
         try:
-            atlas_out = await atlas.run_task(atlas_prompt)
+            # We use Llama 3 8B instead of Qwen 27B for JSON mode to save tokens and avoid 413, or use qwen directly
+            # The prompt is now much shorter due to truncation
+            response = await engine_manager.chat_completion(
+                model="llama3-8b-8192", 
+                messages=[
+                    {"role": "system", "content": "You are Atlas, the Master Orchestrator. Output ONLY valid JSON."},
+                    {"role": "user", "content": atlas_prompt}
+                ],
+                team_id="atlas",
+                response_format={"type": "json_object"}
+            )
+            atlas_out = response.choices[0].message.content
         except Exception as e:
-            atlas_out = f'{{"error": "Atlas failed: {str(e)}"}}'
+            atlas_out = f'{{"error": "Atlas LLM synthesis failed: {str(e)}"}}'
+            
         await event_publisher.publish(self.session_id, "finish", {"agent": "Atlas"})
         
         try:

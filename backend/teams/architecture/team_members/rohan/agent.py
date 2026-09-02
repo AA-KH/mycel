@@ -101,4 +101,4 @@ class RohanAgent(ArchitectureBaseAgent):
                 arguments.get("title", "Supply Chain Topology")
             )
         else:
-            return f"Error: Tool '{function_name}' not recognized by RohanAgent."
+            return await super().execute_tool(function_name, arguments)

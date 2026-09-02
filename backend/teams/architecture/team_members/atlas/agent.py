@@ -52,4 +52,4 @@ class AtlasAgent(ArchitectureBaseAgent):
                 return json.dumps({"error": f"Failed to calculate risk: {str(e)}"})
             
         else:
-            return f"Error: Tool '{function_name}' not recognized by AtlasAgent."
+            return await super().execute_tool(function_name, arguments)

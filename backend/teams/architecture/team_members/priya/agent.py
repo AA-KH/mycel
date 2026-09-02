@@ -79,4 +79,4 @@ class PriyaAgent(ArchitectureBaseAgent):
             })
             
         else:
-            return f"Error: Tool '{function_name}' not recognized by PriyaAgent."
+            return await super().execute_tool(function_name, arguments)
