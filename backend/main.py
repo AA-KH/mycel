@@ -7,6 +7,7 @@ from contextlib import asynccontextmanager
 from core.logger import logger
 from core.rabbitmq import rabbitmq_connection
 from core.mongodb import mongodb_connection
+from core.hana import hana_connection
 from core.middleware import RequestContextMiddleware
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
@@ -29,6 +30,9 @@ async def lifespan(app: FastAPI):
         logger.info("RabbitMQ connection established")
     except Exception as error:
         logger.error("Failed to initialize RabbitMQ", extra={"error": str(error)})
+        
+    # Initialize SAP HANA Connection
+    hana_connection.connect()
 
     # Config readiness checks
     from core.config import settings
@@ -55,6 +59,7 @@ async def lifespan(app: FastAPI):
     logger.info("Shutting down FastAPI application")
     await mongodb_connection.close()
     await rabbitmq_connection.close()
+    hana_connection.close()
 
 
 app = FastAPI(

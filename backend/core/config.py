@@ -34,6 +34,12 @@ class Settings(BaseSettings):
     mongodb_url: str = "mongodb://localhost:27017/office"
     mongodb_database: str = "office"
 
+    # SAP HANA Configuration
+    hana_address: str = ""
+    hana_port: str = ""
+    hana_user: str = ""
+    hana_password: str = ""
+
     # ArmorIQ / Security Configuration
     armoriq_api_key: str = ""
     security_provider_mode: str = "armoriq"  # 'armoriq' or 'mock'
