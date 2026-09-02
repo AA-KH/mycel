@@ -274,6 +274,10 @@ export function useMissionSim(projectId?: string | null): MissionState {
               }
             } else if (kind === 'complete') {
               next.complete = true
+              // Re-fetch snapshot to get the live architecture_report from backend
+              setTimeout(() => {
+                loadSnapshot()
+              }, 1000) // small delay to ensure backend has saved the report
             }
             return next
           })

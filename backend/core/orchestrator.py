@@ -91,44 +91,74 @@ The Global Task Force has completed its multi-phase analysis. Here is the entire
 
 Synthesize these reports. Resolve conflicts. You MUST factor in ALL Intelligence, Network, Resilience, and Architectural constraints provided above.
 You MUST output your final synthesis as a strict JSON object matching this schema exactly:
-```json
+
+CRITICAL RULES:
+1. Every node's "stage" field MUST exactly equal the "id" of its parent stage.
+2. Every node "id" must be unique across ALL stages (e.g., "sup-a", "mfg-main", "wh-central").
+3. "risk" must be one of: "low", "medium", or "high" — nothing else.
+4. Include as many real nodes per stage as the analysis warrants (1 to 6 per stage). Be dynamic.
+5. Output ONLY the raw JSON — no markdown fences, no commentary.
+
+EXAMPLE of correct structure (yours must follow this exact shape with real data):
 {{
   "stages": [
     {{
-      "id": "stage-id",
-      "label": "Stage Label (e.g. Suppliers)",
-      "owner": "Agent Name",
-      "question": "Stage question?",
+      "id": "suppliers",
+      "label": "Tier-1 Suppliers",
+      "owner": "Rohan",
+      "question": "Who feeds the network?",
       "nodes": [
         {{
-          "id": "node-id",
-          "stage": "stage-id",
-          "name": "Node Name",
-          "share": "100%",
-          "risk": "low", 
-          "location": "Location",
-          "function": "Node function summary",
-          "flowLabel": "Flow label",
-          "meta": ["meta1", "meta2"],
-          "detail": [{{ "label": "Detail label", "value": "Detail value" }}],
-          "fallback": "Fallback plan"
+          "id": "sup-a",
+          "stage": "suppliers",
+          "name": "Supplier A",
+          "share": "60%",
+          "risk": "medium",
+          "location": "Germany",
+          "function": "Primary source — lowest landed cost, carries the base volume.",
+          "flowLabel": "60% · 21d",
+          "meta": ["Primary — lowest landed cost", "Lead time 21 days"],
+          "detail": [{{"label": "Allocation", "value": "60% of annual volume"}}],
+          "fallback": "Supplier B absorbs 40% on outage > 72h."
+        }}
+      ]
+    }},
+    {{
+      "id": "manufacturing",
+      "label": "Manufacturing",
+      "owner": "Kabir",
+      "question": "Where is value added?",
+      "nodes": [
+        {{
+          "id": "mfg-main",
+          "stage": "manufacturing",
+          "name": "Primary Plant",
+          "share": null,
+          "risk": "high",
+          "location": "India · West",
+          "function": "Core production hub, capacity 140k units/yr.",
+          "flowLabel": "140k units/yr",
+          "meta": ["Capacity 140k units/yr", "ISO 9001 certified"],
+          "detail": [{{"label": "Capacity", "value": "140k units/yr"}}],
+          "fallback": "Shift 30% to contract manufacturer within 2 weeks."
         }}
       ]
     }}
   ],
   "decision": {{
-    "verdict": "Overall verdict",
-    "allocation": "Allocation strategy",
-    "reason": "Why this topology",
-    "tradeoff": "Cost vs Resilience tradeoff",
-    "resilience": "Resilience summary"
+    "verdict": "APPROVED — resilient dual-source network",
+    "allocation": "Supplier A 60% · Supplier B 25% · Supplier C 15%",
+    "reason": "Dual-source mitigates single-country dependency",
+    "tradeoff": "Slightly higher cost vs single-source, offset by resilience",
+    "resilience": "All critical nodes have documented fallback paths"
   }},
   "rollout": [
-    {{ "phase": "Phase 1", "action": "Action", "status": "Ready now" }}
+    {{"phase": "Phase 1", "action": "Qualify Supplier B to 25% share", "status": "Ready now"}},
+    {{"phase": "Phase 2", "action": "Commission Regional Buffer warehouse", "status": "Q2 2025"}}
   ]
 }}
-```
-Output ONLY the JSON. No markdown backticks, no commentary.
+
+Now generate the REAL output based on the actual analysis above. Use real supplier names, locations, percentages, and specifics from the expert reports — not placeholder text.
 """
         
         await event_publisher.publish(self.session_id, "start", {"agent": "Atlas", "task": "Synthesizing executive blueprint from all teams"})
