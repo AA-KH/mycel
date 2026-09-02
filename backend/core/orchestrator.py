@@ -134,21 +134,31 @@ Output ONLY the JSON. No markdown backticks, no commentary.
         await event_publisher.publish(self.session_id, "start", {"agent": "Atlas", "task": "Synthesizing executive blueprint from all teams"})
         
         # Bypass Agent loop to avoid tool hallucination and enforce JSON output
-        from core.groq_engine import engine_manager
+        from core.gemini_engine import engine_manager as gemini_manager
         try:
-            # We use Llama 3 8B instead of Qwen 27B for JSON mode to save tokens and avoid 413, or use qwen directly
-            # The prompt is now much shorter due to truncation
-            response = await engine_manager.chat_completion(
-                model="qwen/qwen3.8-27b", 
+            # We use Gemini for JSON mode to save tokens and avoid 413
+            response = await gemini_manager.chat_completion(
+                model="gemini-flash-latest", 
                 messages=[
                     {"role": "system", "content": "You are Atlas, the Master Orchestrator. Output ONLY valid JSON."},
                     {"role": "user", "content": atlas_prompt}
-                ],
-                team_id="atlas",
-                response_format={"type": "json_object"}
+                ]
             )
             atlas_out = response.choices[0].message.content
+            
+            # Strip markdown and text to ensure valid JSON extraction
+            atlas_out = atlas_out.strip()
+            if "```json" in atlas_out:
+                atlas_out = atlas_out.split("```json")[1].split("```")[0].strip()
+            elif "```" in atlas_out:
+                atlas_out = atlas_out.split("```")[1].split("```")[0].strip()
+            
+            # Ultimate fallback to just grabbing everything between first { and last }
+            if atlas_out.find("{") != -1 and atlas_out.rfind("}") != -1:
+                atlas_out = atlas_out[atlas_out.find("{"):atlas_out.rfind("}")+1]
+                
         except Exception as e:
+            logger.error(f"Atlas LLM synthesis failed: {str(e)}")
             atlas_out = f'{{"error": "Atlas LLM synthesis failed: {str(e)}"}}'
             
         await event_publisher.publish(self.session_id, "finish", {"agent": "Atlas"})
