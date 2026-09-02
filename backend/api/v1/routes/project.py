@@ -68,15 +68,26 @@ async def run_agents_in_background(project_id: str, master_prompt: str):
         import json
         import re
         
-        # Default fallback
+        # Default fallback (ensuring representation from all phases and teams)
         hired_personnel = [
-            {"agent_id": "architecture_ethan", "name": "Ethan", "role": "Independent Validator", "team": "ARCHITECTURE", "badge": "MYC-020-ETH", "mandate": "Default validation", "status": "GREEN"},
+            # Phase 1: Research
+            {"agent_id": "intelligence_ravi", "name": "Ravi", "role": "Supplier Intelligence", "team": "INTELLIGENCE", "badge": "MYC-010-RAV", "mandate": "Default supplier data", "status": "GREEN"},
+            {"agent_id": "network_aanya", "name": "Aanya", "role": "Network Design", "team": "NETWORK", "badge": "MYC-014-AAN", "mandate": "Default routing", "status": "GREEN"},
+            {"agent_id": "council_sofia", "name": "Sofia", "role": "Council Chair", "team": "COUNCIL", "badge": "MYC-005-SOF", "mandate": "Default strategy", "status": "GREEN"},
+            
+            # Phase 2: Drafting
             {"agent_id": "architecture_priya", "name": "Priya", "role": "Implementation Planner", "team": "ARCHITECTURE", "badge": "MYC-019-PRI", "mandate": "Default planning", "status": "GREEN"},
             {"agent_id": "architecture_rohan", "name": "Rohan", "role": "Master Supply-Chain Architect", "team": "ARCHITECTURE", "badge": "MYC-018-ROH", "mandate": "Default routing", "status": "GREEN"},
+            
+            # Phase 3: Validation
+            {"agent_id": "resilience_leena", "name": "Leena", "role": "Stress Tester", "team": "RESILIENCE", "badge": "MYC-021-LEE", "mandate": "Default stress testing", "status": "GREEN"},
+            {"agent_id": "architecture_ethan", "name": "Ethan", "role": "Independent Validator", "team": "ARCHITECTURE", "badge": "MYC-020-ETH", "mandate": "Default validation", "status": "GREEN"},
+            
+            # Phase 4: Synthesis
             {"agent_id": "architecture_atlas", "name": "Atlas", "role": "Executive Orchestrator", "team": "ARCHITECTURE", "badge": "MYC-017-ATL", "mandate": "Default orchestration", "status": "GREEN"}
         ]
         
-        hired_agent_ids = ["architecture_ethan", "architecture_priya", "architecture_rohan", "architecture_atlas"]
+        hired_agent_ids = [p["agent_id"] for p in hired_personnel]
         
         try:
             # Try to extract the JSON payload she generated via tool
@@ -84,9 +95,27 @@ async def run_agents_in_background(project_id: str, master_prompt: str):
             if match:
                 parsed = json.loads(match.group(0))
                 hired_personnel = parsed.get("hired_personnel", hired_personnel)
-                hired_agent_ids = [p["agent_id"] for p in hired_personnel if "agent_id" in p]
         except Exception as e:
             logger.warning(f"Failed to parse Maya's output for hired personnel, defaulting to core team. Error: {e}")
+            
+        # GUARANTEE FULL TEAM PARTICIPATION
+        # If Maya missed any core teams, forcefully inject the fallback representative
+        represented_teams = {p.get("team", "").upper() for p in hired_personnel}
+        
+        fallback_representatives = {
+            "INTELLIGENCE": {"agent_id": "intelligence_ravi", "name": "Ravi", "role": "Supplier Intelligence", "team": "INTELLIGENCE", "badge": "MYC-010-RAV", "status": "GREEN"},
+            "NETWORK": {"agent_id": "network_aanya", "name": "Aanya", "role": "Network Design", "team": "NETWORK", "badge": "MYC-014-AAN", "status": "GREEN"},
+            "COUNCIL": {"agent_id": "council_sofia", "name": "Sofia", "role": "Council Chair", "team": "COUNCIL", "badge": "MYC-005-SOF", "status": "GREEN"},
+            "RESILIENCE": {"agent_id": "resilience_leena", "name": "Leena", "role": "Stress Tester", "team": "RESILIENCE", "badge": "MYC-021-LEE", "status": "GREEN"},
+            "ARCHITECTURE": {"agent_id": "architecture_atlas", "name": "Atlas", "role": "Executive Orchestrator", "team": "ARCHITECTURE", "badge": "MYC-017-ATL", "status": "GREEN"}
+        }
+        
+        for required_team, fallback_agent in fallback_representatives.items():
+            if required_team not in represented_teams:
+                logger.info(f"Team {required_team} was missing from Maya's hires. Forcefully injecting representative {fallback_agent['name']}.")
+                hired_personnel.append(fallback_agent)
+                
+        hired_agent_ids = [p["agent_id"] for p in hired_personnel]
 
         logger.info(f"Maya hired the following team: {hired_agent_ids}")
         
