@@ -63,13 +63,23 @@ export function ControlRoom() {
         </div>
       </header>
 
+      {/* main split: office viewport + command center */}
+      <div className="grid min-h-0 flex-1 grid-cols-1 gap-4 p-4 lg:grid-cols-[minmax(0,1fr)_minmax(360px,480px)] md:p-5">
+        <div className="min-h-0 max-lg:h-[42svh]">
+          <OfficeViewport mission={mission} projectId={projectId} />
+        </div>
+        <div className="min-h-0 max-lg:flex-1">
+          <CommandCenter mission={mission} projectId={projectId} />
+        </div>
+      </div>
+
       {/* team directory overlay */}
       {teamOpen ? (
         <div
           role="dialog"
           aria-modal="true"
           aria-label="Team directory"
-          className="fixed inset-0 z-50 flex items-center justify-center p-4 md:p-8"
+          className="fixed inset-0 z-[100] flex items-center justify-center p-4 md:p-8"
         >
           <button
             type="button"
@@ -96,16 +106,6 @@ export function ControlRoom() {
           </div>
         </div>
       ) : null}
-
-      {/* main split: office viewport + command center */}
-      <div className="grid min-h-0 flex-1 grid-cols-1 gap-4 p-4 lg:grid-cols-[minmax(0,1fr)_minmax(360px,480px)] md:p-5">
-        <div className="min-h-0 max-lg:h-[42svh]">
-          <OfficeViewport mission={mission} projectId={projectId} />
-        </div>
-        <div className="min-h-0 max-lg:flex-1">
-          <CommandCenter mission={mission} projectId={projectId} />
-        </div>
-      </div>
     </main>
   )
 }

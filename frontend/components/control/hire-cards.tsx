@@ -78,7 +78,7 @@ function IdentityCard({
         type="button"
         onClick={onOpen}
         aria-label={`Open personnel card for ${hire.agent}`}
-        className="group block w-full border-2 border-foreground bg-card text-left pixel-shadow-sm transition-colors hover:bg-muted/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent active:translate-x-[2px] active:translate-y-[2px] active:shadow-none"
+        className="group block w-full border-2 border-foreground bg-card text-left pixel-shadow-sm transition-all hover:scale-[1.04] hover:pixel-shadow focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent active:scale-100 active:translate-x-[2px] active:translate-y-[2px] active:shadow-none"
       >
         {/* card header strip */}
         <div className={cn('flex items-center justify-between border-b-2 border-foreground px-2.5 py-1.5', colors.bg)}>

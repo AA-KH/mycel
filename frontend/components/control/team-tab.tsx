@@ -35,11 +35,11 @@ export function TeamTab() {
       <div className="pixel-scroll min-h-0 flex-1 overflow-y-auto bg-muted/60 p-3">
         {/* overall directory intro */}
         <div className="mb-4 border-2 border-foreground bg-card p-3 pixel-shadow-sm">
-          <p className="text-pretty text-[12px] leading-relaxed text-foreground/90">
+          <p className="text-pretty text-[13px] leading-relaxed text-foreground/90">
             An autonomous organization of {AGENTS.length} agents across six teams that researches, designs,
             stress-tests, and debates its way to a complete supply network architecture.
           </p>
-          <p className="mt-1.5 font-mono text-[8px] uppercase tracking-widest text-accent">
+          <p className="mt-1.5 font-mono text-[10px] uppercase tracking-widest text-accent">
             Click any member to open their full dossier
           </p>
         </div>
@@ -54,19 +54,19 @@ export function TeamTab() {
                   <div className="flex items-baseline gap-2">
                     <h3
                       className={cn(
-                        'inline-block border-2 border-foreground px-2 py-0.5 font-mono text-[8px] uppercase tracking-widest',
+                        'inline-block border-2 border-foreground px-2 py-0.5 font-mono text-[10px] uppercase tracking-widest',
                         colors.bg,
                         colors.text,
                       )}
                     >
                       {team}
                     </h3>
-                    <span className="font-mono text-[8px] uppercase tracking-widest text-muted-foreground">
+                    <span className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground">
                       {TEAM_TAGLINE[team]}
                     </span>
                   </div>
                   {/* team description lives outside the member cards */}
-                  <p className="mt-1.5 text-pretty text-[11px] leading-relaxed text-foreground/75">
+                  <p className="mt-1.5 text-pretty text-[13px] leading-relaxed text-foreground/75">
                     {TEAM_DESCRIPTIONS[team]}
                   </p>
                 </header>
@@ -94,12 +94,12 @@ export function TeamTab() {
 
                         <span className="min-w-0 flex-1">
                           <span className="flex flex-wrap items-baseline gap-x-2">
-                            <span className="font-mono text-[11px] uppercase tracking-wider">{member.name}</span>
-                            <span className="font-mono text-[8px] uppercase tracking-widest text-accent">
+                            <span className="font-mono text-[13px] uppercase tracking-wider">{member.name}</span>
+                            <span className="font-mono text-[9px] uppercase tracking-widest text-accent">
                               {member.role}
                             </span>
                           </span>
-                          <span className="mt-0.5 block truncate text-[11px] leading-relaxed text-foreground/70">
+                          <span className="mt-0.5 block truncate text-[12px] leading-relaxed text-foreground/70">
                             {AGENT_TAGLINES[member.name] ?? member.detail}
                           </span>
                         </span>
@@ -107,7 +107,7 @@ export function TeamTab() {
                         {/* open-dossier affordance */}
                         <span
                           aria-hidden="true"
-                          className="shrink-0 border-2 border-foreground bg-muted px-1.5 py-1 font-mono text-[8px] uppercase tracking-widest text-muted-foreground transition-colors group-hover:bg-accent group-hover:text-accent-foreground"
+                          className="shrink-0 border-2 border-foreground bg-muted px-1.5 py-1 font-mono text-[10px] uppercase tracking-widest text-muted-foreground transition-colors group-hover:bg-accent group-hover:text-accent-foreground"
                         >
                           {'\u25b8'}
                         </span>
