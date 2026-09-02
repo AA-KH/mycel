@@ -73,7 +73,7 @@ export function ArchitectChat({ projectId }: { projectId: string | null }) {
     return (
       <button
         onClick={() => setIsOpen(true)}
-        className="flex items-center gap-2 border-2 border-foreground bg-accent px-4 py-2 font-mono text-[10px] uppercase tracking-widest text-accent-foreground pixel-shadow transition-transform hover:-translate-y-0.5"
+        className="flex items-center gap-2 border-2 border-foreground bg-accent px-4 py-2 font-mono text-xs uppercase tracking-widest text-accent-foreground pixel-shadow transition-transform hover:-translate-y-0.5"
       >
         <span className="flex h-2 w-2 items-center justify-center bg-accent-foreground" />
         Ask the Architect
@@ -82,19 +82,19 @@ export function ArchitectChat({ projectId }: { projectId: string | null }) {
   }
 
   return (
-    <div className="flex w-[340px] flex-col border-2 border-foreground bg-card pixel-shadow-sm shadow-xl">
+    <div className="flex w-[420px] flex-col border-2 border-foreground bg-card pixel-shadow-sm shadow-xl">
       <header className="flex items-center justify-between border-b-2 border-foreground bg-accent px-2.5 py-1.5">
-        <h3 className="font-mono text-[9px] uppercase tracking-widest text-accent-foreground">
+        <h3 className="font-mono text-[11px] uppercase tracking-widest text-accent-foreground">
           Ask the Architect
         </h3>
         <div className="flex items-center gap-3">
-          <span className="flex items-center gap-1.5 font-mono text-[7px] uppercase tracking-widest text-accent-foreground">
-            <span className={cn('inline-block h-1.5 w-1.5 bg-accent-foreground', busy && 'blink')} aria-hidden="true" />
+          <span className={cn("flex items-center gap-1.5 font-mono text-[9px] uppercase tracking-widest", busy ? "text-accent-foreground" : "text-[#b9d8ac]")}>
+            <span className={cn('inline-block h-1.5 w-1.5', busy ? 'bg-accent-foreground blink' : 'bg-[#b9d8ac]')} aria-hidden="true" />
             {busy ? 'Thinking' : 'Online'}
           </span>
           <button 
             onClick={() => setIsOpen(false)}
-            className="flex h-4 w-4 items-center justify-center bg-accent-foreground font-mono text-[10px] leading-none text-accent transition-transform hover:scale-110"
+            className="flex h-4 w-4 items-center justify-center bg-accent-foreground font-mono text-xs leading-none text-accent transition-transform hover:scale-110"
             aria-label="Close chat"
           >
             ×
@@ -109,18 +109,17 @@ export function ArchitectChat({ projectId }: { projectId: string | null }) {
         aria-live="polite"
       >
         {messages.length === 0 ? (
-          <div>
-            <p className="text-pretty text-[11px] leading-relaxed text-muted-foreground">
-              The blueprint is signed off. Ask anything about the architecture — why the council chose this
-              topology, what a term means, or how the network survives a disruption.
+          <div className="flex flex-col gap-4">
+            <p className="text-sm leading-relaxed text-muted-foreground">
+              The blueprint is signed off. Ask anything about the architecture — why the council chose this topology, what a term means, or how the network survives a disruption.
             </p>
-            <div className="mt-2 flex flex-wrap gap-1.5">
+            <div className="flex flex-col gap-2">
               {SUGGESTIONS.map((sug) => (
                 <button
                   key={sug}
                   type="button"
                   onClick={() => submit(sug)}
-                  className="border-2 border-foreground bg-muted px-2 py-1 text-left font-mono text-[8px] uppercase tracking-wider text-foreground transition-colors hover:bg-secondary hover:text-secondary-foreground"
+                  className="border-2 border-foreground bg-muted px-3 py-2 text-left font-mono text-[10px] uppercase tracking-wider text-foreground transition-colors hover:bg-secondary hover:text-secondary-foreground"
                 >
                   {sug}
                 </button>
@@ -140,13 +139,13 @@ export function ArchitectChat({ projectId }: { projectId: string | null }) {
                 >
                   <span
                     className={cn(
-                      'font-mono text-[7px] uppercase tracking-widest',
+                      'font-mono text-[9px] uppercase tracking-widest',
                       isUser ? 'text-secondary' : 'text-accent',
                     )}
                   >
                     {isUser ? 'You' : 'Architect'}
                   </span>
-                  <div className="mt-0.5 whitespace-pre-wrap text-[11px] leading-relaxed">
+                  <div className="mt-0.5 whitespace-pre-wrap text-[13px] leading-relaxed">
                     {message.content}
                   </div>
                 </div>
@@ -188,12 +187,12 @@ export function ArchitectChat({ projectId }: { projectId: string | null }) {
             if (e.key === 'Enter' && (e.nativeEvent.isComposing || e.keyCode === 229)) e.preventDefault()
           }}
           placeholder="Ask about the architecture…"
-          className="min-w-0 flex-1 bg-card px-2.5 py-2 text-[12px] text-foreground placeholder:font-mono placeholder:text-[9px] placeholder:uppercase placeholder:tracking-widest placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-inset focus:ring-accent"
+          className="min-w-0 flex-1 bg-card px-2.5 py-2 text-sm text-foreground placeholder:font-mono placeholder:text-[9px] placeholder:uppercase placeholder:tracking-widest placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-inset focus:ring-accent"
         />
         <button
           type="submit"
           disabled={busy || !input.trim()}
-          className="border-l-2 border-foreground bg-accent px-3 py-2 font-mono text-[9px] uppercase tracking-widest text-accent-foreground transition-colors hover:bg-primary hover:text-primary-foreground disabled:cursor-not-allowed disabled:opacity-40"
+          className="border-l-2 border-foreground bg-accent px-3 py-2 font-mono text-[11px] uppercase tracking-widest text-accent-foreground transition-colors hover:bg-primary hover:text-primary-foreground disabled:cursor-not-allowed disabled:opacity-40"
         >
           Send
         </button>

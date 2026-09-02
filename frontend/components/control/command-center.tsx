@@ -18,7 +18,7 @@ const TABS: { id: TabId; label: string }[] = [
   { id: 'blueprint', label: 'Blueprint' },
 ]
 
-export function CommandCenter({ mission }: { mission: MissionState }) {
+export function CommandCenter({ mission, projectId }: { mission: MissionState; projectId: string | null }) {
   const [tab, setTab] = useState<TabId>('atlas')
 
   /* when the mission completes, reveal the blueprint output once */
@@ -131,6 +131,7 @@ export function CommandCenter({ mission }: { mission: MissionState }) {
             architectureReport={mission.architecture_report}
             loadingReport={mission.loadingReport}
             demo={mission.demo}
+            projectId={projectId}
           />
         </div>
       </div>

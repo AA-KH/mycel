@@ -204,9 +204,14 @@ export function SetupWizard() {
                 </PixelButton>
               ) : null}
               {step < STEPS.length - 1 ? (
-                <PixelButton onClick={() => setStep((s) => s + 1)} disabled={!canContinue}>
-                  Next
-                </PixelButton>
+                <>
+                  <PixelButton variant="ghost" onClick={handleBuild} disabled={saving || !canContinue}>
+                    Skip to end
+                  </PixelButton>
+                  <PixelButton onClick={() => setStep((s) => s + 1)} disabled={!canContinue || saving}>
+                    Next
+                  </PixelButton>
+                </>
               ) : (
                 <PixelButton variant="orange" onClick={handleBuild} disabled={saving}>
                   {saving ? (

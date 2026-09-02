@@ -103,7 +103,7 @@ export function ControlRoom() {
           <OfficeViewport mission={mission} projectId={projectId} />
         </div>
         <div className="min-h-0 max-lg:flex-1">
-          <CommandCenter mission={mission} />
+          <CommandCenter mission={mission} projectId={projectId} />
         </div>
       </div>
     </main>

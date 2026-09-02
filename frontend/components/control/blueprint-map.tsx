@@ -11,6 +11,8 @@ import {
   type BlueprintNode,
   type BlueprintStage,
 } from '@/lib/blueprint'
+import { TransformWrapper, TransformComponent } from 'react-zoom-pan-pinch'
+import { ArchitectChat } from './architect-chat'
 
 const RISK_STYLES: Record<NonNullable<BlueprintNode['risk']>, string> = {
   low: 'bg-[#b9d8ac] text-foreground',
@@ -20,7 +22,7 @@ const RISK_STYLES: Record<NonNullable<BlueprintNode['risk']>, string> = {
 
 type Edge = { key: string; from: string; to: string; label?: string; d: string; mx: number; my: number }
 
-export function BlueprintMap({ onClose, architectureReport }: { onClose: () => void; architectureReport?: any }) {
+export function BlueprintMap({ onClose, architectureReport, projectId }: { onClose: () => void; architectureReport?: any; projectId: string | null }) {
   const atlas = architectureReport?.atlas_executive
   const isLive = Array.isArray(atlas?.stages) && atlas.stages.length > 0
   const stages: BlueprintStage[] = isLive ? atlas.stages : BLUEPRINT_STAGES
@@ -63,6 +65,7 @@ export function BlueprintMap({ onClose, architectureReport }: { onClose: () => v
     const canvasEl = canvasRef.current
     if (!canvasEl) return
     const box = canvasEl.getBoundingClientRect()
+    const scale = box.width / (canvasEl.offsetWidth || 1)
     const next: Edge[] = []
 
     for (const stage of stages) {
@@ -74,10 +77,10 @@ export function BlueprintMap({ onClose, architectureReport }: { onClose: () => v
           const toEl = nodeRefs.current.get(toId)
           if (!toEl) continue
           const b = toEl.getBoundingClientRect()
-          const x1 = a.right - box.left
-          const y1 = a.top + a.height / 2 - box.top
-          const x2 = b.left - box.left
-          const y2 = b.top + b.height / 2 - box.top
+          const x1 = (a.right - box.left) / scale
+          const y1 = (a.top + a.height / 2 - box.top) / scale
+          const x2 = (b.left - box.left) / scale
+          const y2 = (b.top + b.height / 2 - box.top) / scale
           const mx = x1 + (x2 - x1) / 2
           // orthogonal stepped path — matches the pixel aesthetic
           const d = `M ${x1} ${y1} H ${mx} V ${y2} H ${x2}`
@@ -133,11 +136,11 @@ export function BlueprintMap({ onClose, architectureReport }: { onClose: () => v
           <div className="min-w-0 flex-1">
             <h2
               id="map-title"
-              className="truncate font-mono text-sm uppercase tracking-widest text-primary-foreground sm:text-base"
+              className="truncate font-mono text-base uppercase tracking-widest text-primary-foreground sm:text-base"
             >
               Supply network map
             </h2>
-            <p className="mt-0.5 truncate font-mono text-[8px] uppercase tracking-widest text-secondary">
+            <p className="mt-0.5 truncate font-mono text-[9px] uppercase tracking-widest text-secondary">
               Rohan {'\u00b7'} Master architecture {'\u00b7'} click any node to inspect
             </p>
           </div>
@@ -146,7 +149,7 @@ export function BlueprintMap({ onClose, architectureReport }: { onClose: () => v
               <span
                 key={r}
                 className={cn(
-                  'border-2 border-foreground px-1.5 py-0.5 font-mono text-[7px] uppercase tracking-widest',
+                  'border-2 border-foreground px-1.5 py-0.5 font-mono text-[8px] uppercase tracking-widest',
                   RISK_STYLES[r],
                 )}
               >
@@ -158,7 +161,7 @@ export function BlueprintMap({ onClose, architectureReport }: { onClose: () => v
             ref={closeRef}
             onClick={onClose}
             aria-label="Close network map"
-            className="flex h-8 w-8 shrink-0 items-center justify-center border-2 border-foreground bg-card font-mono text-sm text-foreground pixel-shadow-sm transition-colors hover:bg-accent hover:text-accent-foreground active:translate-x-[2px] active:translate-y-[2px] active:shadow-none"
+            className="flex h-8 w-8 shrink-0 items-center justify-center border-2 border-foreground bg-card font-mono text-base text-foreground pixel-shadow-sm transition-colors hover:bg-accent hover:text-accent-foreground active:translate-x-[2px] active:translate-y-[2px] active:shadow-none"
           >
             {'\u00d7'}
           </button>
@@ -167,8 +170,42 @@ export function BlueprintMap({ onClose, architectureReport }: { onClose: () => v
         {/* ---------- body: canvas + inspector ---------- */}
         <div className="grid min-h-0 flex-1 grid-cols-1 max-lg:grid-rows-[minmax(0,3fr)_minmax(0,2fr)] lg:grid-cols-[minmax(0,1fr)_340px]">
           {/* ===== pipeline canvas ===== */}
-          <div className="pixel-scroll min-h-0 overflow-auto bg-muted/60 diag-texture">
-            <div ref={canvasRef} className="relative w-max min-w-full p-4">
+          <TransformWrapper
+            initialScale={1}
+            minScale={0.25}
+            maxScale={4}
+            wheel={{ step: 0.1 }}
+          >
+            {({ zoomIn, zoomOut, resetTransform }) => (
+              <div className="relative pixel-scroll min-h-0 overflow-hidden bg-muted/60 diag-texture flex flex-col">
+                <div className="absolute right-4 top-4 z-10 flex flex-col gap-1">
+                  <button
+                    type="button"
+                    onClick={() => zoomIn()}
+                    aria-label="Zoom in"
+                    className="flex h-8 w-8 items-center justify-center border-2 border-foreground bg-card font-mono text-lg text-foreground pixel-shadow-sm transition-colors hover:bg-accent hover:text-accent-foreground active:translate-x-px active:translate-y-px active:shadow-none"
+                  >
+                    +
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => zoomOut()}
+                    aria-label="Zoom out"
+                    className="flex h-8 w-8 items-center justify-center border-2 border-foreground bg-card font-mono text-lg text-foreground pixel-shadow-sm transition-colors hover:bg-accent hover:text-accent-foreground active:translate-x-px active:translate-y-px active:shadow-none"
+                  >
+                    -
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => resetTransform()}
+                    aria-label="Reset zoom"
+                    className="flex h-8 w-8 items-center justify-center border-2 border-foreground bg-card font-mono text-base text-foreground pixel-shadow-sm transition-colors hover:bg-accent hover:text-accent-foreground active:translate-x-px active:translate-y-px active:shadow-none"
+                  >
+                    ↺
+                  </button>
+                </div>
+                <TransformComponent wrapperStyle={{ width: '100%', height: '100%' }}>
+                  <div ref={canvasRef} className="relative w-max min-w-full p-4">
               {/* edge layer */}
               <svg
                 aria-hidden="true"
@@ -209,14 +246,14 @@ export function BlueprintMap({ onClose, architectureReport }: { onClose: () => v
                   <div key={stage.id} className="flex items-stretch">
                     <div className="flex w-[212px] shrink-0 flex-col gap-3 sm:w-[236px]">
                       <div className="border-2 border-foreground bg-card px-2 py-1.5 pixel-shadow-sm">
-                        <p className="font-mono text-[9px] uppercase tracking-widest text-foreground">
+                        <p className="font-mono text-[10px] uppercase tracking-widest text-foreground">
                           {String(si + 1).padStart(2, '0')} {'\u00b7'} {stage.label}
                         </p>
-                        <p className="mt-0.5 font-mono text-[7px] uppercase tracking-widest text-accent">
+                        <p className="mt-0.5 font-mono text-[8px] uppercase tracking-widest text-accent">
                           {stage.owner}
                         </p>
                         {stage.question ? (
-                          <p className="mt-1 text-pretty text-[10px] leading-snug text-muted-foreground">
+                          <p className="mt-1 text-pretty text-[11px] leading-snug text-muted-foreground">
                             {stage.question}
                           </p>
                         ) : null}
@@ -250,29 +287,29 @@ export function BlueprintMap({ onClose, architectureReport }: { onClose: () => v
                               )}
                             >
                               <div className="flex items-start justify-between gap-1.5">
-                                <span className="font-mono text-[10px] uppercase leading-tight tracking-wider">
+                                <span className="font-mono text-[11px] uppercase leading-tight tracking-wider">
                                   {node.name}
                                 </span>
                                 {node.share ? (
-                                  <span className="shrink-0 border-2 border-foreground bg-accent px-1 font-mono text-[8px] tracking-wider text-accent-foreground">
+                                  <span className="shrink-0 border-2 border-foreground bg-accent px-1 font-mono text-[9px] tracking-wider text-accent-foreground">
                                     {node.share}
                                   </span>
                                 ) : null}
                               </div>
                               {node.location ? (
-                                <p className="mt-1 font-mono text-[8px] uppercase tracking-widest text-muted-foreground">
+                                <p className="mt-1 font-mono text-[9px] uppercase tracking-widest text-muted-foreground">
                                   {node.location}
                                 </p>
                               ) : null}
                               {node.meta?.[0] ? (
-                                <p className="mt-1.5 text-pretty text-[10px] leading-snug text-foreground/80">
+                                <p className="mt-1.5 text-pretty text-[11px] leading-snug text-foreground/80">
                                   {node.meta[0]}
                                 </p>
                               ) : null}
                               {node.risk ? (
                                 <span
                                   className={cn(
-                                    'mt-1.5 inline-block border-2 border-foreground px-1 font-mono text-[7px] uppercase tracking-widest',
+                                    'mt-1.5 inline-block border-2 border-foreground px-1 font-mono text-[8px] uppercase tracking-widest',
                                     RISK_STYLES[node.risk as NonNullable<BlueprintNode['risk']>],
                                   )}
                                 >
@@ -291,7 +328,14 @@ export function BlueprintMap({ onClose, architectureReport }: { onClose: () => v
                 ))}
               </div>
             </div>
-          </div>
+            </TransformComponent>
+            {/* Ask the Architect floating above the map bottom-left */}
+            <div className="absolute bottom-4 left-4 z-50">
+              <ArchitectChat projectId={projectId} />
+            </div>
+            </div>
+            )}
+          </TransformWrapper>
 
           {/* ===== inspector ===== */}
           <aside
@@ -301,13 +345,13 @@ export function BlueprintMap({ onClose, architectureReport }: { onClose: () => v
             {selected ? (
               <div className="flex flex-col">
                 <div className="sticky top-0 z-10 border-b-2 border-foreground bg-secondary px-3 py-2">
-                  <p className="font-mono text-[7px] uppercase tracking-widest text-secondary-foreground/70">
+                  <p className="font-mono text-[8px] uppercase tracking-widest text-secondary-foreground/70">
                     Node inspector
                   </p>
-                  <h3 className="font-mono text-sm uppercase tracking-wider text-secondary-foreground">
+                  <h3 className="font-mono text-base uppercase tracking-wider text-secondary-foreground">
                     {selected.name}
                   </h3>
-                  <p className="mt-0.5 font-mono text-[8px] uppercase tracking-widest text-secondary-foreground/80">
+                  <p className="mt-0.5 font-mono text-[9px] uppercase tracking-widest text-secondary-foreground/80">
                     {stages.find((s: any) => s.id === selected.stage)?.label ?? selected.stage}
                     {selected.location ? ` \u00b7 ${selected.location}` : ''}
                   </p>
@@ -315,7 +359,7 @@ export function BlueprintMap({ onClose, architectureReport }: { onClose: () => v
 
                 <div className="flex flex-col gap-4 p-3">
                   {selected.function ? (
-                    <p className="text-pretty border-2 border-foreground bg-muted/70 p-2.5 text-[12px] leading-relaxed">
+                    <p className="text-pretty border-2 border-foreground bg-muted/70 p-2.5 text-sm leading-relaxed">
                       {selected.function}
                     </p>
                   ) : null}
@@ -326,8 +370,8 @@ export function BlueprintMap({ onClose, architectureReport }: { onClose: () => v
                       <dl className="flex flex-col divide-y-2 divide-dashed divide-foreground/25 border-2 border-foreground">
                         {selected.detail.map((d: any) => (
                           <div key={d.label} className="px-2 py-1.5">
-                            <dt className="font-mono text-[7px] uppercase tracking-widest text-accent">{d.label}</dt>
-                            <dd className="mt-0.5 text-pretty text-[11px] leading-snug">{d.value}</dd>
+                            <dt className="font-mono text-[8px] uppercase tracking-widest text-accent">{d.label}</dt>
+                            <dd className="mt-0.5 text-pretty text-xs leading-snug">{d.value}</dd>
                           </div>
                         ))}
                       </dl>
@@ -358,10 +402,10 @@ export function BlueprintMap({ onClose, architectureReport }: { onClose: () => v
                     <section>
                       <InspectorLabel>If this node fails</InspectorLabel>
                       <div className="border-2 border-foreground bg-foreground p-2.5 pixel-shadow-sm">
-                        <p className="mb-1 font-mono text-[8px] uppercase tracking-widest text-secondary">
+                        <p className="mb-1 font-mono text-[9px] uppercase tracking-widest text-secondary">
                           {'>'} Arjun {'\u00b7'} continuity play
                         </p>
-                        <p className="text-pretty font-mono text-[11px] leading-relaxed text-card">
+                        <p className="text-pretty font-mono text-xs leading-relaxed text-card">
                           {selected.fallback}
                         </p>
                       </div>
@@ -370,7 +414,7 @@ export function BlueprintMap({ onClose, architectureReport }: { onClose: () => v
 
                   <section>
                     <InspectorLabel>Council mandate</InspectorLabel>
-                    <p className="text-pretty border-2 border-foreground bg-muted/70 p-2.5 text-[11px] leading-relaxed">
+                    <p className="text-pretty border-2 border-foreground bg-muted/70 p-2.5 text-xs leading-relaxed">
                       {decision.allocation}
                     </p>
                   </section>
@@ -382,10 +426,10 @@ export function BlueprintMap({ onClose, architectureReport }: { onClose: () => v
 
         {/* ---------- footer ---------- */}
         <footer className="flex shrink-0 items-center justify-between gap-2 border-t-2 border-foreground bg-muted px-3 py-2">
-          <span className="font-mono text-[8px] uppercase tracking-widest text-muted-foreground">
+          <span className="font-mono text-[9px] uppercase tracking-widest text-muted-foreground">
             {stages.length} layers {'\u00b7'} {edges.length} flows {'\u00b7'} scroll to pan
           </span>
-          <span className="font-mono text-[8px] uppercase tracking-widest text-muted-foreground">Esc to close</span>
+          <span className="font-mono text-[9px] uppercase tracking-widest text-muted-foreground">Esc to close</span>
         </footer>
       </div>
     </div>
@@ -394,7 +438,7 @@ export function BlueprintMap({ onClose, architectureReport }: { onClose: () => v
 
 function InspectorLabel({ children }: { children: React.ReactNode }) {
   return (
-    <h4 className="mb-1.5 flex items-center gap-1.5 font-mono text-[9px] uppercase tracking-widest text-foreground">
+    <h4 className="mb-1.5 flex items-center gap-1.5 font-mono text-[10px] uppercase tracking-widest text-foreground">
       <span aria-hidden="true" className="inline-block h-2 w-2 border-2 border-foreground bg-accent" />
       {children}
     </h4>
@@ -416,9 +460,9 @@ function ConnectionRow({
 }) {
   return (
     <div>
-      <p className="mb-1 font-mono text-[7px] uppercase tracking-widest text-muted-foreground">{heading}</p>
+      <p className="mb-1 font-mono text-[8px] uppercase tracking-widest text-muted-foreground">{heading}</p>
       {ids.length === 0 ? (
-        <p className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground">{'\u2014'} network edge</p>
+        <p className="font-mono text-[11px] uppercase tracking-widest text-muted-foreground">{'\u2014'} network edge</p>
       ) : (
         <ul className="flex flex-wrap gap-1.5">
           {ids.map((id) => {
@@ -431,7 +475,7 @@ function ConnectionRow({
                   onClick={() => onSelect(id)}
                   onMouseEnter={() => onHover(id)}
                   onMouseLeave={() => onHover(null)}
-                  className="border-2 border-foreground bg-card px-1.5 py-0.5 font-mono text-[9px] uppercase tracking-wider pixel-shadow-sm transition-colors hover:bg-accent hover:text-accent-foreground"
+                  className="border-2 border-foreground bg-card px-1.5 py-0.5 font-mono text-[10px] uppercase tracking-wider pixel-shadow-sm transition-colors hover:bg-accent hover:text-accent-foreground"
                 >
                   {n.name}
                 </button>
