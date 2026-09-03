@@ -291,3 +291,41 @@ async def trigger_poll():
 
     results = await orch.run_poll_cycle()
     return results
+
+
+# ── Webhook Receiver (Push) ──
+
+@router.post("/tradewatch/webhook")
+async def tradewatch_webhook(payload: dict):
+    """Receive pushed tariff updates from TradeWatch/TariffWire."""
+    orch = _get_orchestrator()
+    if not orch.profile:
+        raise HTTPException(400, "Load a profile first via POST /api/monitor/profile")
+
+    from ..connectors.tradewatch import TradeWatchConnector
+    connector = orch.connectors.get("tradewatch")
+    if not connector:
+        connector = TradeWatchConnector(orch.config)
+
+    events = connector._normalize(payload)
+
+    results = []
+    for event in events:
+        try:
+            situation = await orch.process_event(event)
+            results.append({
+                "event_id": event.event_id,
+                "title": event.title,
+                "matched": situation is not None,
+                "situation_id": situation.situation_id if situation else None,
+                "severity": situation.severity.value if situation else None,
+            })
+        except Exception as e:
+            logger.error(f"Error processing webhook event: {e}")
+            results.append({"error": str(e)})
+
+    return {
+        "status": "received",
+        "processed": len(results),
+        "results": results
+    }
