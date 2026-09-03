@@ -198,52 +198,111 @@ Original Request Context:
         logger.info(f"Crisis re-architecture completed for {project_id}")
         
     except Exception as e:
-        logger.error(f"Failed crisis re-architecture for {project_id}: {str(e)}")
+        logger.exception(f"Failed crisis re-architecture for {project_id}: {str(e)}")
+        try:
+            await mongodb_connection.db.projects.update_one(
+                {"project_id": project_id},
+                {"$set": {"status": "CRISIS_FAILED", "crisis_error": str(e)}},
+            )
+            await event_publisher.publish(project_id, "log", {
+                "level": "error",
+                "text": f"CRISIS MODE: re-architecture failed for alert {alert.alert_id}: {e}",
+            })
+        except Exception as inner:
+            logger.error(f"Could not record crisis failure for {project_id}: {inner}")
 
 
 @router.post("/alert")
 async def receive_monitor_alert(
     payload: AlertPayload,
-    background_tasks: BackgroundTasks
+    background_tasks: BackgroundTasks,
+    request: Request,
 ):
     """
-    Receives an alert from the Monitor subsystem (or a fake website).
+    Receives an alert from the Monitor subsystem (port 8100) or a demo site.
     Broadcasts it to the frontend and triggers a crisis re-architecture.
+
+    Idempotent on ``X-Idempotency-Key`` (falls back to ``alert_id``): the
+    monitor retries on timeout, and a retry must not spawn a second
+    re-architecture run.
     """
-    logger.info(f"Received MONITOR ALERT: {payload.title}")
-    
-    # In a real scenario, the monitor might not know the exact project ID, 
-    # but it might know the network_id which maps to a project_id.
-    # For this demo, we'll assume the payload provides it, or we'll grab the most recent active project.
-    
+    logger.info(
+        f"Received MONITOR ALERT: [{payload.severity}] {payload.title} "
+        f"(alert_id={payload.alert_id}, entities={payload.affected_entities})"
+    )
+
+    idem_key = request.headers.get("X-Idempotency-Key") or payload.alert_id
+
     db = mongodb_connection.db
     project_id = payload.project_id
-    
+
+    if project_id:
+        exists = await db.projects.find_one({"project_id": project_id}, {"_id": 1})
+        if not exists:
+            logger.warning(f"Alert targeted project {project_id} which does not exist — falling back to latest project")
+            project_id = None
+
     if not project_id:
-        # Get the most recently created project for the demo
+        # The monitor may not know the project; apply to the most recent one.
         latest_project = await db.projects.find_one({}, sort=[("created_at", -1)])
         if latest_project:
             project_id = latest_project["project_id"]
         else:
             raise HTTPException(status_code=404, detail="No active project found to apply alert to.")
-            
+
+    if _already_processed(idem_key):
+        logger.info(f"Duplicate alert {idem_key} for project {project_id} — re-architecture already running/complete")
+        return {
+            "status": "duplicate",
+            "project_id": project_id,
+            "alert_id": payload.alert_id,
+            "message": "Alert already received; crisis re-architecture not re-triggered.",
+        }
+
+    # Persist the alert on the project so future re-architectures keep honoring
+    # this constraint (read back as `crisis_alerts` in the crisis prompt).
+    await db.projects.update_one(
+        {"project_id": project_id},
+        {
+            "$push": {
+                "crisis_alerts": {
+                    "alert_id": payload.alert_id,
+                    "severity": payload.severity,
+                    "title": payload.title,
+                    "description": payload.description,
+                    "affected_entities": payload.affected_entities,
+                    "received_at": datetime.datetime.utcnow(),
+                }
+            },
+            "$set": {"status": "CRISIS_REARCHITECTING"},
+        },
+    )
+
     # 1. Broadcast the CRITICAL_ALERT to the frontend via WebSockets
     await event_publisher.publish(project_id, "crisis_alert", {
+        "alert_id": payload.alert_id,
         "title": payload.title,
         "description": payload.description,
         "severity": payload.severity,
+        "affected_entities": payload.affected_entities,
         "timestamp": datetime.datetime.utcnow().isoformat()
     })
-    
+
     # 2. Trigger Autonomous Re-architecture
     background_tasks.add_task(run_crisis_rearchitecture_in_background, project_id, payload)
-    
-    return {"status": "success", "message": "Alert received, crisis re-architecture initiated."}
+
+    return {
+        "status": "success",
+        "project_id": project_id,
+        "alert_id": payload.alert_id,
+        "message": "Alert received, crisis re-architecture initiated.",
+    }
 
 @router.post("/tariff-alert")
 async def receive_tariff_alert(
     payload: TariffAlertPayload,
-    background_tasks: BackgroundTasks
+    background_tasks: BackgroundTasks,
+    request: Request,
 ):
     """
     Receives a specific tariff increase payload from the demo site.
@@ -264,5 +323,5 @@ async def receive_tariff_alert(
     )
     
     # Delegate to the main alert processor
-    return await receive_monitor_alert(alert, background_tasks)
+    return await receive_monitor_alert(alert, background_tasks, request)
 

@@ -37,13 +37,19 @@ from ..models.situations import Alert
 def build_webhook_payload(alert: Alert, project_id: Optional[str] = None) -> dict[str, Any]:
     """Translate a monitor Alert into the main backend's AlertPayload schema."""
     affected: list[str] = []
+    seen_lower: set[str] = set()
+
+    def _add(value: Any) -> None:
+        text = str(value).strip() if value is not None else ""
+        if text and text.lower() not in seen_lower:
+            seen_lower.add(text.lower())
+            affected.append(text)
+
     for entity in alert.affected_entities:
         if isinstance(entity, dict):
-            value = entity.get("entity_name") or entity.get("entity_id")
+            _add(entity.get("entity_name") or entity.get("entity_id"))
         else:
-            value = entity
-        if value and str(value) not in affected:
-            affected.append(str(value))
+            _add(entity)
 
     # Also surface locations, routes, and commodities so the main backend's
     # architect sees the full constraint set without parsing monitor_alert.
@@ -52,8 +58,7 @@ def build_webhook_payload(alert: Alert, project_id: Optional[str] = None) -> dic
         + list(alert.affected_routes)
         + list(alert.affected_commodities)
     ):
-        if value and str(value) not in affected:
-            affected.append(str(value))
+        _add(value)
 
     description = alert.description or alert.title
     if alert.why_it_matters:
