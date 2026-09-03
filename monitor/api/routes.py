@@ -12,6 +12,8 @@ Endpoints:
 - GET  /api/monitor/metrics   — Pipeline metrics
 - GET  /api/monitor/entities  — Monitored entities with current state
 - GET  /api/monitor/sources   — Source connector health
+- POST /api/monitor/tradewatch/webhook — Push a tariff event through the pipeline
+- POST /api/monitor/alerts/forward     — Forward a pre-formed alert to the main backend
 """
 
 from __future__ import annotations
@@ -55,6 +57,8 @@ async def health():
         "uptime_seconds": round(orch.metrics.uptime_seconds, 1),
         "profile_loaded": orch.profile is not None,
         "active_sources": len(orch.connectors.active_connectors()),
+        "alert_webhook_url": orch.dispatcher.webhook_url,
+        "alert_webhook_configured": orch.dispatcher.is_configured,
     }
 
 
@@ -295,9 +299,40 @@ async def trigger_poll():
 
 # ── Webhook Receiver (Push) ──
 
+def _alert_dispatch_summary(orch: Orchestrator, situation) -> dict:
+    """Describe what happened to the alert for a situation (if any)."""
+    if situation is None:
+        return {"alert_id": None, "dispatched": False, "reason": "event not relevant to network"}
+
+    alert = orch.alert_manager._find_active_alert(situation.situation_id)
+    if alert is None:
+        return {
+            "alert_id": None,
+            "dispatched": False,
+            "reason": (
+                f"severity '{situation.severity.value}' below alert threshold "
+                "or suppressed by cooldown"
+            ),
+        }
+    return {
+        "alert_id": alert.alert_id,
+        "dispatched": alert.dispatched,
+        "dispatch_attempts": alert.dispatch_attempts,
+        "webhook_url": orch.dispatcher.webhook_url,
+        "reason": None if alert.dispatched else "webhook dispatch failed — see monitor logs",
+    }
+
+
 @router.post("/tradewatch/webhook")
 async def tradewatch_webhook(payload: dict):
-    """Receive pushed tariff updates from TradeWatch/TariffWire."""
+    """Receive pushed tariff updates from TradeWatch/TariffWire.
+
+    Accepts a single tariff object, a list, or ``{"data": [...]}``. An
+    optional top-level ``project_id`` pins the resulting alert to a specific
+    main-backend project. Matching events flow through the full pipeline and,
+    if they clear the severity threshold, are forwarded to the main backend
+    which triggers crisis re-architecture.
+    """
     orch = _get_orchestrator()
     if not orch.profile:
         raise HTTPException(400, "Load a profile first via POST /api/monitor/profile")
@@ -307,25 +342,121 @@ async def tradewatch_webhook(payload: dict):
     if not connector:
         connector = TradeWatchConnector(orch.config)
 
-    events = connector._normalize(payload)
+    project_id: Optional[str] = None
+    if isinstance(payload, dict):
+        project_id = payload.get("project_id") or None
+
+    # skip_seen=False: a re-sent CMD payload must not be silently swallowed by
+    # the connector — the pipeline deduplicator makes the final call.
+    events = connector._normalize(payload, skip_seen=False)
+    if not events:
+        raise HTTPException(
+            400,
+            "No tariff events could be parsed. Expected keys: imposingCountry, "
+            "targetCountry, sector, newRatePercent (previousRatePercent, delta optional).",
+        )
 
     results = []
     for event in events:
         try:
-            situation = await orch.process_event(event)
+            situation = await orch.process_event(event, project_id=project_id)
             results.append({
                 "event_id": event.event_id,
                 "title": event.title,
+                "countries": event.countries,
+                "commodities": event.commodities,
                 "matched": situation is not None,
                 "situation_id": situation.situation_id if situation else None,
                 "severity": situation.severity.value if situation else None,
+                "alert": _alert_dispatch_summary(orch, situation),
             })
         except Exception as e:
-            logger.error(f"Error processing webhook event: {e}")
-            results.append({"error": str(e)})
+            logger.exception(f"Error processing webhook event: {e}")
+            results.append({"error": str(e), "title": event.title})
 
     return {
         "status": "received",
         "processed": len(results),
-        "results": results
+        "forwarded_to_main_backend": sum(1 for r in results if r.get("alert", {}).get("dispatched")),
+        "results": results,
+    }
+
+
+# ── Direct Alert Forward (CMD / manual) ──
+
+class ForwardAlertRequest(BaseModel):
+    """A pre-formed alert to forward to the main backend through the monitor.
+
+    Mirrors the main backend's ``AlertPayload`` so the same JSON you would
+    send to ``/api/v1/monitor/alert`` can be sent here instead and is logged,
+    persisted, and forwarded by the monitor.
+    """
+    alert_id: Optional[str] = None
+    severity: str = "CRITICAL"
+    title: str
+    description: Optional[str] = None
+    affected_entities: list[str] = []
+    project_id: Optional[str] = None
+
+
+@router.post("/alerts/forward")
+async def forward_alert(request: ForwardAlertRequest):
+    """Forward a manual alert to the main backend, bypassing relevance scoring.
+
+    Use this when you already know the alert matters (demo, drill, CMD test)
+    and just want the monitor to hand it to the main backend so the main
+    backend regenerates the architecture around the new constraint.
+    """
+    orch = _get_orchestrator()
+
+    from uuid import uuid4
+    from ..models.situations import Alert
+    from ..models.state import AlertSeverity
+
+    try:
+        severity = AlertSeverity(request.severity.lower())
+    except ValueError:
+        raise HTTPException(
+            400, f"Invalid severity '{request.severity}'. Use one of: info, watch, warning, critical"
+        )
+
+    alert_id = request.alert_id or f"ALT-MAN-{uuid4().hex[:8].upper()}"
+    network_id = orch.profile.network_id if orch.profile else "manual"
+
+    alert = Alert(
+        alert_id=alert_id,
+        network_id=network_id,
+        situation_id=f"SIT-MAN-{uuid4().hex[:8].upper()}",
+        severity=severity,
+        event_type="manual",
+        title=request.title,
+        description=request.description or request.title,
+        affected_entities=[{"entity_id": e} for e in request.affected_entities],
+        confidence=1.0,
+        idempotency_key=alert_id,
+    )
+
+    dispatched = await orch.dispatcher.dispatch(alert, project_id=request.project_id)
+    orch.alert_manager._register_alert(alert)
+    orch.metrics.alerts_generated += 1
+    if dispatched:
+        orch.metrics.alerts_dispatched += 1
+    else:
+        orch.metrics.alerts_dispatch_failed += 1
+    if orch._initialized:
+        orch.store.save_alert(alert)
+
+    if not dispatched:
+        raise HTTPException(
+            502,
+            f"Alert {alert_id} could not be delivered to the main backend at "
+            f"{orch.dispatcher.webhook_url}. Is the main backend running on port 8000?",
+        )
+
+    return {
+        "status": "forwarded",
+        "alert_id": alert_id,
+        "severity": severity.value,
+        "webhook_url": orch.dispatcher.webhook_url,
+        "project_id": request.project_id,
     }
