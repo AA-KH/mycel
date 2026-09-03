@@ -118,6 +118,18 @@ class RelevanceEngine:
             breakdown.country_code = best_country.country_code
             event.log(f"COUNTRY_MATCH: {best_country.country_code}")
 
+            # A country-level event (tariff, sanction, embargo) hits every
+            # node in that country. Weight it by the most critical one so the
+            # severity policy sees real network importance instead of zeros.
+            if not breakdown.entity_match:
+                most_critical = self._most_critical_target(
+                    [m.entity_id for m in country_matches if m.entity_id]
+                )
+                if most_critical:
+                    self._populate_network_data(breakdown, most_critical)
+                    if most_critical not in event.matched_node_ids:
+                        event.matched_node_ids.append(most_critical)
+
         # ── 4. Commodity matching ──
         commodity_match = self._match_commodities(event)
         if commodity_match:
@@ -212,6 +224,19 @@ class RelevanceEngine:
                 return commodity
 
         return None
+
+    def _most_critical_target(self, entity_ids: list[str]) -> Optional[str]:
+        """Return the entity_id with the highest criticality among candidates."""
+        best_id: Optional[str] = None
+        best_score = -1.0
+        wanted = set(entity_ids)
+        for target in self.profile.watch_targets:
+            if target.entity_id in wanted:
+                score = max(target.criticality, target.dependency_share or 0.0)
+                if score > best_score:
+                    best_score = score
+                    best_id = target.entity_id
+        return best_id
 
     def _populate_network_data(self, breakdown: RelevanceBreakdown, entity_id: str) -> None:
         """Populate relevance breakdown with data from the network graph.

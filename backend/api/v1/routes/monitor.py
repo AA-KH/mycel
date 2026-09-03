@@ -1,6 +1,6 @@
 from fastapi import APIRouter, BackgroundTasks, Request, HTTPException
-from pydantic import BaseModel
-from typing import Optional, List, Dict, Any
+from pydantic import BaseModel, ConfigDict, field_validator
+from typing import Optional, List, Dict, Any, Union
 import datetime
 
 from core.mongodb import mongodb_connection
@@ -9,13 +9,65 @@ from core.events import event_publisher
 
 router = APIRouter()
 
+# Idempotency: alerts already handed to the re-architecture pipeline.
+# The monitor retries with the same X-Idempotency-Key / alert_id, so a retry
+# after a slow first response must not spawn a second re-architecture.
+_PROCESSED_ALERT_IDS: Dict[str, datetime.datetime] = {}
+_IDEMPOTENCY_TTL = datetime.timedelta(hours=6)
+
+
+def _already_processed(alert_id: str) -> bool:
+    now = datetime.datetime.utcnow()
+    # Prune stale keys
+    for key in [k for k, ts in _PROCESSED_ALERT_IDS.items() if now - ts > _IDEMPOTENCY_TTL]:
+        _PROCESSED_ALERT_IDS.pop(key, None)
+    if alert_id in _PROCESSED_ALERT_IDS:
+        return True
+    _PROCESSED_ALERT_IDS[alert_id] = now
+    return False
+
+
 class AlertPayload(BaseModel):
+    """Alert contract shared with the monitor subsystem (monitor/alerting/alert_dispatcher.py).
+
+    Unknown fields are ignored so the monitor can attach extra context
+    (``monitor_alert``) without breaking validation.
+    """
+    model_config = ConfigDict(extra="ignore")
+
     alert_id: str
     severity: str
     title: str
-    description: str
-    affected_entities: Optional[List[str]] = []
-    project_id: Optional[str] = None # Added for demo to target a specific project if needed
+    description: Optional[str] = None
+    affected_entities: List[str] = []
+    project_id: Optional[str] = None  # Target a specific project; falls back to latest
+    monitor_alert: Optional[Dict[str, Any]] = None  # Full monitor Alert (optional)
+
+    @field_validator("severity", mode="before")
+    @classmethod
+    def _upper_severity(cls, v: Any) -> str:
+        return str(v or "CRITICAL").upper()
+
+    @field_validator("affected_entities", mode="before")
+    @classmethod
+    def _coerce_entities(cls, v: Any) -> List[str]:
+        """Accept plain strings or monitor-style {"entity_id": ..., "entity_name": ...} dicts."""
+        if not v:
+            return []
+        out: List[str] = []
+        for item in v:
+            if isinstance(item, dict):
+                val = item.get("entity_name") or item.get("entity_id") or item.get("name")
+            else:
+                val = item
+            if val and str(val) not in out:
+                out.append(str(val))
+        return out
+
+    @field_validator("project_id", mode="before")
+    @classmethod
+    def _blank_project_is_none(cls, v: Any) -> Optional[str]:
+        return v or None
 
 class TariffAlertPayload(BaseModel):
     imposingCountry: str
@@ -46,15 +98,63 @@ async def run_crisis_rearchitecture_in_background(project_id: str, alert: AlertP
             return
             
         original_prompt = project.get("master_prompt", "")
-        
+
+        # ── Build the constraint block from everything the monitor sent ──
+        constraint_lines: List[str] = []
+        if alert.affected_entities:
+            constraint_lines.append(
+                "Affected entities / regions / commodities (MUST be avoided or de-risked): "
+                + ", ".join(alert.affected_entities)
+            )
+        ma = alert.monitor_alert or {}
+        if ma.get("affected_locations"):
+            constraint_lines.append("Affected locations: " + ", ".join(map(str, ma["affected_locations"])))
+        if ma.get("affected_routes"):
+            constraint_lines.append("Affected routes: " + ", ".join(map(str, ma["affected_routes"])))
+        if ma.get("affected_commodities"):
+            constraint_lines.append("Affected commodities: " + ", ".join(map(str, ma["affected_commodities"])))
+        if ma.get("why_it_matters"):
+            constraint_lines.append("Why it matters: " + " | ".join(map(str, ma["why_it_matters"])))
+        if ma.get("evidence_path"):
+            constraint_lines.append("Network evidence path: " + " -> ".join(map(str, ma["evidence_path"])))
+        rel = ma.get("relevance") or {}
+        if rel:
+            constraint_lines.append(
+                "Network impact data: "
+                f"criticality={rel.get('criticality')}, dependency_share={rel.get('dependency_share')}, "
+                f"alternate_coverage={rel.get('alternate_coverage')}, event_severity={rel.get('event_severity')}"
+            )
+        constraints_block = "\n".join(f"- {line}" for line in constraint_lines) or "- (none supplied)"
+
+        # Any prior crisis constraints on this project must still be honored
+        prior_alerts = project.get("crisis_alerts", []) or []
+        prior_block = ""
+        if prior_alerts:
+            prior_lines = [
+                f"- [{a.get('severity', '?')}] {a.get('title', '')}: "
+                + ", ".join(a.get("affected_entities", []) or [])
+                for a in prior_alerts[-5:]
+                if a.get("alert_id") != alert.alert_id
+            ]
+            if prior_lines:
+                prior_block = (
+                    "\nPREVIOUSLY RECEIVED CONSTRAINTS (still in force, do NOT reintroduce these risks):\n"
+                    + "\n".join(prior_lines) + "\n"
+                )
+
         crisis_prompt = f"""
-CRITICAL CRISIS ALERT RECEIVED:
+CRITICAL CRISIS ALERT RECEIVED FROM THE MONITORING SYSTEM:
+Alert ID: {alert.alert_id}
 Title: {alert.title}
 Severity: {alert.severity}
-Description: {alert.description}
+Description: {alert.description or alert.title}
 
+HARD CONSTRAINTS FROM THE MONITOR (the new architecture MUST satisfy every one):
+{constraints_block}
+{prior_block}
 You must COMPLETELY REDESIGN the architecture to avoid this risk. 
-Your new architecture must mitigate the impact of this crisis.
+Your new architecture must route around every affected entity, region, route and commodity listed above,
+and must mitigate the impact of this crisis.
 Furthermore, Helena MUST calculate the estimated PROFIT LOSS caused by this crisis.
 
 CRITICAL INSTRUCTION FOR ATLAS:

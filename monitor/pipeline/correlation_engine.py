@@ -199,9 +199,13 @@ class CorrelationEngine:
         """Create a new situation from an event."""
         situation_id = f"SIT-{uuid4().hex[:8].upper()}"
 
-        affected_entities = []
+        affected_entities: list[str] = []
         if result.breakdown.entity_id:
             affected_entities.append(result.breakdown.entity_id)
+        # Country/geo-level matches record the impacted node(s) on the event
+        for node_id in event.matched_node_ids:
+            if node_id not in affected_entities:
+                affected_entities.append(node_id)
 
         affected_locations = []
         if result.breakdown.location_name:

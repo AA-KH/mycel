@@ -36,9 +36,14 @@ class MonitorConfig(BaseSettings):
     llm_temperature: float = 0.1
 
     # ── Alert Dispatch ──
-    alert_webhook_url: Optional[str] = None
-    alert_webhook_timeout: int = 10
+    # Main Mycel backend webhook (port 8000). Alerts that pass the pipeline are
+    # POSTed here so the main backend can trigger crisis re-architecture.
+    alert_webhook_url: Optional[str] = "http://localhost:8000/api/v1/monitor/alert"
+    alert_webhook_timeout: int = 30
     alert_webhook_max_retries: int = 3
+    # Optional: pin alerts to a specific main-backend project. If unset, the
+    # main backend falls back to the most recently created project.
+    alert_project_id: Optional[str] = None
 
     # ── Source: GDELT ──
     gdelt_enabled: bool = True
