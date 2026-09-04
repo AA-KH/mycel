@@ -126,4 +126,4 @@ export function getAgent(name: string): AgentDef | undefined {
  * External ArmorIQ platform log endpoint.
  * Set NEXT_PUBLIC_ARMORIQ_URL to override; falls back to the platform root.
  */
-export const ARMORIQ_URL = process.env.NEXT_PUBLIC_ARMORIQ_URL || 'https://armoriq.ai/logs'
+export const ARMORIQ_URL = process.env.NEXT_PUBLIC_ARMORIQ_URL || 'https://platform.armoriq.ai/dashboard/api'

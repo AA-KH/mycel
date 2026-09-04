@@ -23,7 +23,7 @@ export function ArchitectChat({ projectId }: { projectId: string | null }) {
   const [input, setInput] = useState('')
   const [isOpen, setIsOpen] = useState(false)
   const [status, setStatus] = useState<'idle' | 'submitted'>('idle')
-  const [error, setError] = useState(false)
+  const [error, setError] = useState<string | null>(null)
   const scrollRef = useRef<HTMLDivElement>(null)
 
   const busy = status === 'submitted'
@@ -35,10 +35,14 @@ export function ArchitectChat({ projectId }: { projectId: string | null }) {
 
   const submit = async (text: string) => {
     const trimmed = text.trim()
-    if (!trimmed || busy || !projectId) return
+    if (!trimmed || busy) return
+    if (!projectId) {
+      setError('No live project is loaded — the architect can only answer for a real run. Start a project from Setup to ask questions.')
+      return
+    }
     
     setInput('')
-    setError(false)
+    setError(null)
     setStatus('submitted')
     
     const newMessages = [...messages, { id: Math.random().toString(), role: 'user' as const, content: trimmed }]
@@ -63,7 +67,7 @@ export function ArchitectChat({ projectId }: { projectId: string | null }) {
       const data = await res.json()
       setMessages(prev => [...prev, { id: Math.random().toString(), role: 'assistant', content: data.content }])
     } catch (err) {
-      setError(true)
+      setError('Transmission failed. Try asking again.')
     } finally {
       setStatus('idle')
     }
@@ -162,8 +166,8 @@ export function ArchitectChat({ projectId }: { projectId: string | null }) {
         ) : null}
 
         {error ? (
-          <p className="border-2 border-foreground bg-[#e07a4c]/20 px-2 py-1.5 font-mono text-[9px] uppercase tracking-wider text-foreground">
-            Transmission failed. Try asking again.
+          <p role="alert" className="border-2 border-foreground bg-[#e07a4c]/20 px-2 py-1.5 font-mono text-[9px] uppercase tracking-wider text-foreground">
+            {error}
           </p>
         ) : null}
       </div>

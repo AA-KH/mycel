@@ -148,11 +148,18 @@ class Orchestrator:
         data = json.loads(Path(path).read_text())
         return await self.load_profile_from_architecture(data)
 
-    async def process_event(self, event: CanonicalEvent) -> Optional[Situation]:
+    async def process_event(
+        self,
+        event: CanonicalEvent,
+        project_id: Optional[str] = None,
+    ) -> Optional[Situation]:
         """Process a single event through the full pipeline.
 
         Returns the situation if the event is relevant and creates/updates
         a situation, None otherwise.
+
+        ``project_id`` (optional) is forwarded to the main backend with any
+        alert this event produces so the re-architecture targets that project.
 
         Pipeline: dedup → entity/geo match → hard gate → correlate →
                   (optional semantic) → severity → alert
@@ -168,6 +175,7 @@ class Orchestrator:
         if duplicate_of:
             self.metrics.events_deduplicated += 1
             event.dedup_of = duplicate_of
+            logger.info(f"Event {event.event_id} is a duplicate of {duplicate_of} — skipped")
             return None
 
         # ── 2. Entity/Geo Match + Hard Relevance Gate ──
@@ -175,6 +183,10 @@ class Orchestrator:
 
         if not result.passed_gate:
             self.metrics.events_rejected += 1
+            logger.info(
+                f"Event {event.event_id} rejected by relevance gate: {result.reject_reason} "
+                f"(countries={event.countries}, commodities={event.commodities})"
+            )
             return None
 
         # Track match types
@@ -252,16 +264,25 @@ class Orchestrator:
             )
             if alert:
                 self.metrics.alerts_generated += 1
-                self.store.save_alert(alert)
 
-                # Dispatch asynchronously
-                dispatched = await self.dispatcher.dispatch(alert)
+                # Dispatch to the main backend, then persist with dispatch state
+                dispatched = await self.dispatcher.dispatch(alert, project_id=project_id)
                 if dispatched:
                     self.metrics.alerts_dispatched += 1
                 else:
                     self.metrics.alerts_dispatch_failed += 1
+                self.store.save_alert(alert)
             else:
                 self.metrics.alerts_suppressed += 1
+                logger.info(
+                    f"Alert suppressed for situation {situation.situation_id} "
+                    f"(cooldown/rate limit) — main backend NOT notified"
+                )
+        else:
+            logger.info(
+                f"Situation {situation.situation_id} severity={severity.value} below alert "
+                f"threshold — main backend NOT notified"
+            )
 
         # ── 8. Persist ──
         self.store.save_event(event, situation.situation_id)
