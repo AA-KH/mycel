@@ -106,14 +106,26 @@ export function BlueprintMap({ onClose, architectureReport, projectId }: { onClo
   }, [measure])
 
   /* ---------- keyboard + focus ---------- */
+  // Move focus into the dialog exactly once, on mount. This must NOT depend on
+  // `onClose` — the parent recreates that callback on every mission tick, and
+  // re-running the focus call stole focus from the Ask-the-Architect input
+  // while the user was typing.
   useEffect(() => {
     closeRef.current?.focus()
+  }, [])
+
+  const onCloseRef = useRef(onClose)
+  useEffect(() => {
+    onCloseRef.current = onClose
+  }, [onClose])
+
+  useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onClose()
+      if (e.key === 'Escape') onCloseRef.current()
     }
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
-  }, [onClose])
+  }, [])
 
   const onBackdrop = useCallback(
     (e: React.MouseEvent) => {
